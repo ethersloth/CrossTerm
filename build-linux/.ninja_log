@@ -1,0 +1,21 @@
+# ninja log v7
+2	554	1787178466627357288	CrossTerm_autogen/timestamp	737a71d0f0d4cbb
+2	554	1787178466627357288	CrossTerm_autogen/mocs_compilation.cpp	737a71d0f0d4cbb
+2	554	1787178466627357288	/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build-linux/CrossTerm_autogen/timestamp	737a71d0f0d4cbb
+2	554	1787178466627357288	/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build-linux/CrossTerm_autogen/mocs_compilation.cpp	737a71d0f0d4cbb
+558	874	1787178466951360545	CrossTerm_autogen/EWIEGA46WW/qrc_resources.cpp	73bb3a97843a14d0
+558	874	1787178466951360545	/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build-linux/CrossTerm_autogen/EWIEGA46WW/qrc_resources.cpp	73bb3a97843a14d0
+878	1421	1787178466967286493	CMakeFiles/CrossTerm.dir/CrossTerm_autogen/EWIEGA46WW/qrc_resources.cpp.o	47097f3e6ff86e6e
+876	2917	1787178466965393021	CMakeFiles/CrossTerm.dir/src/terminal/TerminalCell.cpp.o	ada50f6b2b0251c1
+876	4345	1787178466965618290	CMakeFiles/CrossTerm.dir/src/terminal/TerminalScreen.cpp.o	5aa5fb15911f4474
+875	4576	1787178466964739076	CMakeFiles/CrossTerm.dir/src/connections/LocalShellConnection.cpp.o	2a887bbab9cf1b8c
+875	4878	1787178466964966400	CMakeFiles/CrossTerm.dir/src/connections/SshConnection.cpp.o	9f67a3dce68289bb
+877	4991	1787178466966270970	CMakeFiles/CrossTerm.dir/src/profiles/ConnectionProfile.cpp.o	d870ecb72d0d3081
+875	5230	1787178466965145326	CMakeFiles/CrossTerm.dir/src/widgets/TerminalWidget.cpp.o	1247072c32feeadb
+876	5530	1787178466966054214	CMakeFiles/CrossTerm.dir/src/terminal/TerminalParser.cpp.o	96085d681569187
+874	5764	1787178466964162575	CMakeFiles/CrossTerm.dir/src/main.cpp.o	cdbe33aaa0c13227
+874	5929	1787178466962360655	CMakeFiles/CrossTerm.dir/CrossTerm_autogen/mocs_compilation.cpp.o	13774efc495b2a7f
+877	6385	1787178466966518718	CMakeFiles/CrossTerm.dir/src/profiles/ProfileManager.cpp.o	30d371cc56b7509e
+877	7111	1787178466966825715	CMakeFiles/CrossTerm.dir/src/dialogs/NewSessionDialog.cpp.o	6789bf4fe5d609ee
+875	8374	1787178466964500185	CMakeFiles/CrossTerm.dir/src/MainWindow.cpp.o	d252ed220a617c7a
+8375	8847	1787178474463436048	CrossTerm	5ca1f0631766b8c9

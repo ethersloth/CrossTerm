@@ -1,0 +1,9 @@
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/CrossTerm.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/edit_cache.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/rebuild_cache.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/list_install_components.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/install.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/install/local.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/install/strip.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/CrossTerm_autogen_timestamp_deps.dir
+/home/gwhitlock/Desktop/workspace/CrossTerm-0.1.0/build/CMakeFiles/CrossTerm_autogen.dir
