@@ -31,7 +31,7 @@ SshConnection::SshConnection(const QString &host,
             this, &SshConnection::readProcessOutput);
     connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &SshConnection::processFinished);
-    connect(&m_process, QOverload<QProcess::ProcessError>::of(&QProcess::error),
+        connect(&m_process, &QProcess::errorOccurred,
             this, &SshConnection::processError);
 #endif
 }

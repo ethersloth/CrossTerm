@@ -37,7 +37,20 @@ qt_add_executable(CrossTerm
     src/dialogs/NewSessionDialog.cpp
 )
 
+add_executable(TerminalParserTest
+    tests/TerminalParserTest.cpp
+    src/terminal/TerminalCell.cpp
+    src/terminal/TerminalScreen.cpp
+    src/terminal/TerminalParser.cpp
+)
+
+target_include_directories(TerminalParserTest PRIVATE src)
 target_link_libraries(CrossTerm PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+)
+target_link_libraries(TerminalParserTest PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets

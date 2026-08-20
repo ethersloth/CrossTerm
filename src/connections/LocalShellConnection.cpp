@@ -1,6 +1,7 @@
 #include "LocalShellConnection.h"
 
 #include <QProcessEnvironment>
+#include <QStandardPaths>
 #include <QSocketNotifier>
 #include <QTimer>
 
@@ -23,10 +24,13 @@ LocalShellConnection::LocalShellConnection(QObject *parent)
 
     connect(&m_process, &QProcess::readyRead,
             this, &LocalShellConnection::readProcessOutput);
-    connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+    connect(&m_process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             this, &LocalShellConnection::processFinished);
-    connect(&m_process, QOverload<QProcess::ProcessError>::of(&QProcess::error),
-            this, &LocalShellConnection::processError);
+    // Note: QProcess::error() is a getter, errorOccurred() is the signal
+    connect(&m_process, 
+            QOverload<QProcess::ProcessError>::of(&QProcess::errorOccurred),
+            this,
+            &LocalShellConnection::processError);
 }
 #else
 LocalShellConnection::LocalShellConnection(QObject *parent)
@@ -61,10 +65,15 @@ void LocalShellConnection::connectSession()
         return;
 
 #ifdef Q_OS_WIN
-    // Windows: Use ConPTY or regular process
-    const QString program = QStringLiteral("powershell.exe");
-    QStringList arguments = {QStringLiteral("-NoLogo"), QStringLiteral("-Command"), 
-                            QStringLiteral("pwsh")};
+    // Start a single interactive shell process. Nesting PowerShell can mangle input parsing.
+    QString program = QStringLiteral("pwsh.exe");
+    QStringList arguments = {QStringLiteral("-NoLogo"), QStringLiteral("-NoProfile")};
+
+    // Fallback for systems without PowerShell 7 on PATH.
+    if (QStandardPaths::findExecutable(program).isEmpty()) {
+        program = QStringLiteral("powershell.exe");
+        arguments = {QStringLiteral("-NoLogo"), QStringLiteral("-NoProfile")};
+    }
 
     m_process.start(program, arguments);
 

@@ -22,7 +22,6 @@ public slots:
 private slots:
     void readProcessOutput();
     void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
-
     void processError(QProcess::ProcessError error);
     void checkProcessStatus();
 private:

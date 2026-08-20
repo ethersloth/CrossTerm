@@ -147,8 +147,9 @@ void TerminalParser::processNormalChar(uint8_t byte)
             m_screen.scrollUp();
             cursor.moveToRow(m_screen.rows() - 1);
         }
-        // Most shells/programs write '\n' expecting a visual new line start.
-        cursor.moveToColumn(0);
+        // LF does not imply CR unless the terminal is in newline mode.
+        if (m_lineFeed)
+            cursor.moveToColumn(0);
         break;
 
     case 0x0d:  // CR (Carriage Return)
