@@ -1,0 +1,192 @@
+The authenticity of host '10.255.254.35 (10.255.254.35)' can't be established.
+ED25519 key fingerprint is: SHA256:zVuhstGLvlrgyYCu2ed7U6z81JT1Dc7fjrklQE1a3cE
+This host key is known by the following other names/addresses:
+    ~/.ssh/known_hosts:17: gregdebnas.local
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.255.254.35' (ED25519) to the list of known hosts.
+gwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 13:54:36 2026 from 10.255.254.126
+                                                                                            gwhitlock@gregdebnas:~$ [?2004he[38;2;153;153;153mcho "--- UFW ---"; sudo ufw status | head -n 1; echo "--- nftables[39m>                        ex                                                                                          ex[38;2;153;153;153mit[39mit[?2004l
+Connection to 10.255.254.35 closed.
+gwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 14:18:18 2026 from 10.255.254.236
+                                                                                            gwhitlock@gregdebnas:~$ [?2004hc[38;2;153;153;153mat testfile2.txt[39ml               [38;2;153;153;153mear[39mear[?2004l
+                                                                                            
+gwhitlock@gregdebnas:~$ [?2004hc[38;2;153;153;153mlear[39mlear[?2004l
+                                                                                            
+gwhitlock@gregdebnas:~$ [?2004hl[38;2;153;153;153msblk[39m     c[38;2;153;153;153mlear[39md   [38;2;153;153;153m /ho[39m[38;2;153;153;153mme/gwhitlock/Desktop/workspace[39m                        cd [38;2;153;153;153m/[38;2;153;153;153mh[38;2;153;153;153mo[39m/home//gwhitlock//Desktop//workspace/ [?2004l
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hl[38;2;153;153;153msblk[39ml   [?2004l
+total 0
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hv[38;2;153;153;153mim testfile.txt[39mim testfile.txt[?2004l
+[30;1H"testfile.txt" [New][2;1H~                                                                                            [3;1H~                                                                                            [4;1H~                                                                                            [5;1H~                                                                                            [6;1H~                                                                                            [7;1H~                                                                                            [8;1H~                                                                                            [9;1H~                                                                                            [10;1H~                                                                                            [11;1H~                                                                                            [12;1H~                                                                                            [13;1H~                                                                                            [14;1H~                                                                                            [15;1H~                                                                                            [16;1H~                                                                                            [17;1H~                                                                                            [18;1H~                                                                                            [19;1H~                                                                                            [20;1H~                                                                                            [21;1H~                                                                                            [22;1H~                                                                                            [23;1H~                                                                                            [24;1H~                                                                                            [25;1H~                                                                                            [26;1H~                                                                                            [27;1H~                                                                                            [28;1H~                                                                                            [29;1H~                                                                                            [30;76H0,0-1[30;90HAll[1;1H[30;66Hi[1;1H[30;66H [1;1H[30;1H-- INSERT --        [30;76H     [30;90H   [30;76H0,1[30;90HAll[1;1Hd[30;76H1,2[1;2Hd[30;78H3[1;3Hd [30;78H2[1;2H [30;78H1[1;1H[30;1H            [30;76H   [30;90H   [1;1H[30;66H^[[1;1H[30;66H  [1;1H[30;76H1,0-1[30;90HAll[1;1H[30;66Hd[1;1H[30;67Hd[1;1H[30;66H  [1;1H[30;1H--No lines in buffer--[30;76H     [30;90H   [30;76H0,0-1[30;90HAll[1;1H[30;66Hi[1;1H[30;66H [1;1H[30;1H-- INSERT --          [30;76H     [30;90H   [30;76H0,1[30;90HAll[1;1HT[30;76H1,2[1;2He[30;78H3[1;3Hs[30;78H4[1;4Ht[30;78H5[1;5H1[30;78H6[1;6H2[30;78H7[1;7H3[30;78H8[1;8H
+                                                                                             [30;76H2,1[2;1HA[30;78H2[2;2HB[30;78H3[2;3HC[30;78H4[2;4HD[30;78H5[2;5H
+                                                                                             [30;76H3,1[3;1Ha[30;78H2[3;2Hb[30;78H3[3;3Hc[30;78H4[3;4Hd[30;78H5[3;5H
+                                                                                             [30;76H4,1[4;1H[30;1H            [30;76H   [30;90H   [4;1H[30;66H^[[4;1H[30;66H  [4;1H[30;76H4,0-1[30;90HAll[4;1H[30;66H:[4;1H[30;66H [30;76H     [30;90H   :wq"testfile.txt" [New] 4L, 19B written
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hl[38;2;153;153;153ml[39ml[?2004l
+total 4
+-rw-rw-r-- 1 gwhitlock gwhitlock 19 Aug 21 14:19 testfile.txt
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hs[38;2;153;153;153mz testfile.txt[39mz testfile.txt  [?2004l
+rz**B00000000000000�**B00000000000000�                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hgwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 14:18:22 2026 from 10.255.254.236
+                                                                                            gwhitlock@gregdebnas:~$ [?2004hc[38;2;153;153;153md /home/gwhitlock/Desktop/workspace[39m                        cd /home//gwhitlock//Desktop//workspace/ [?2004l
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hl[38;2;153;153;153ml[39ml[?2004l
+total 4
+-rw-rw-r-- 1 gwhitlock gwhitlock 19 Aug 21 14:19 testfile.txt
+                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hs[38;2;153;153;153mz testfile.txt[39mz testfile.txt  [?2004l
+rz**B00000000000000�**B00000000000000�                                                                                            
+gwhitlock@gregdebnas:~/Desktop/workspace$ [?2004hgwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 14:25:08 2026 from 10.255.254.126
+                                                                                             ]0;gwhitlock@gregdebnas: ~[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153md /home/gwhitlock/Desktop/workspace[39m[35Dc[39ml[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [34D[38;2;153;153;153mear[39m[39me[39ma[39mr[?1l>[?2004l
+[H[2J[3J                                                                                             ]0;gwhitlock@gregdebnas: ~
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hll[38;2;153;153;153ml[39ml[39ml[?1l>[?2004l
+total 40
+drwxr-xr-x 3 gwhitlock gwhitlock 4096 Apr 15 13:47 [0m[01;34mDesktop[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mDocuments[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mDownloads[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mMusic[0m
+drwxr-xr-x 3 gwhitlock gwhitlock 4096 Apr 12 12:32 [01;34mPictures[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mPublic[0m
+drwxrwxr-x 2 gwhitlock gwhitlock 4096 Apr 18 14:13 [01;34mStuff[0m
+drwxrwxr-x 3 gwhitlock gwhitlock 4096 Apr 12 18:04 [01;34mSync[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mTemplates[0m
+drwxr-xr-x 2 gwhitlock gwhitlock 4096 Apr 11 21:18 [01;34mVideos[0m
+                                                                                             ]0;gwhitlock@gregdebnas: ~
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153mlear[39mc[39md[39m [39m [39m [38;2;153;153;153m /ho[39m[38;2;153;153;153mme/gwhitlock/Desktop/workspace[39m[34D[39m [2C[38;2;153;153;153mo[39m[39m/[39mh[39mo[39mm[39me[39m[1m/[0m[0m/[39mg[39mw[39mh[39mi[39mt[39ml[39mo[39mc[39mk[39m[1m/[0m[0m/[39mD[39me[39ms[39mk[39mt[39mo[39mp[39m[1m/[0m[0m/[39mw[39mo[39mr[39mk[39ms[39mp[39ma[39mc[39me[1m/[0m[0m [?1l>[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hll[38;2;153;153;153ml[39ml[39ml[?1l>[?2004l
+total 4
+-rw-rw-r-- 1 gwhitlock gwhitlock 19 Aug 21 14:19 testfile.txt
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153md /home/gwhitlock/Desktop/workspace[39m[35Dc[39ml[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [34D[38;2;153;153;153mear[39m[39me[39ma[39mr[?1l>[?2004l
+[H[2J[3J                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hss[38;2;153;153;153mz testfile.txt[39m[14Ds[39mz[39m [39mt[39me[39ms[39mt[39mf[39mi[39ml[39me[39m.[39mt[39mx[39mt[1m [0m[0m [?1l>[?2004l
+rz**B00000000000000�                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004h[?1l>[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hss[38;2;153;153;153mz testfile.txt[39m[14Ds[39mz[13C[?1l>[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hgwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 14:32:19 2026 from 10.255.254.236
+                                                                                             ]0;gwhitlock@gregdebnas: ~[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153mlear[39mc[39md[39m [39m [39m [38;2;153;153;153m /ho[39m[38;2;153;153;153mme/gwhitlock/Desktop/workspace[39m[34D[39m [2C[38;2;153;153;153mo[33C[?1l>[?2004l[39m
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hss[38;2;153;153;153mz testfile.txt[39m[14Ds[39mz[39m [39mt[11C[?1l>[?2004l
+rz**B00000000000000�**B00000000000000�                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hgwhitlock@10.255.254.35's password: 
+Linux gregdebnas 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Fri Aug 21 14:36:00 2026 from 10.255.254.236
+                                                                                             ]0;gwhitlock@gregdebnas: ~[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153md /home/gwhitlock/Desktop/workspace[39m[35Dc[39ml[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [34D[38;2;153;153;153mear[39m[39me[39ma[39mr[?1l>[?2004l
+[H[2J[3J                                                                                             ]0;gwhitlock@gregdebnas: ~
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153mlear[39m [39m [39m [39m [39m cc[38;2;153;153;153mlear[39mc[39md[39m [39m [39m [38;2;153;153;153m /ho[39m[38;2;153;153;153mme/gwhitlock/Desktop/workspace[39m[34D[39m [2C[38;2;153;153;153mo[39m[39m/[39mh[39mo[39mm[39me[39m[1m/[0m[0m/[27C[?1l>[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hss[38;2;153;153;153mz testfile.txt[39m[14Ds[39mz[13C[?1l>[?2004l
+rz**B00000000000000�                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004h[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hrr[38;2;153;153;153mm testfile* -rf[39m[15Dr[39mz[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [14D [38;2;153;153;153mtestfile.txt[39m[12D[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [13D[?1l>[?2004l
+rz waiting to receive.**B0100000023be50�                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004h[?1l>[?2004l
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hll[38;2;153;153;153ml[39ml[39ml[?1l>[?2004l
+total 8
+-rw-r--r-- 1 gwhitlock gwhitlock 46 Aug 21 14:38 testfile2.txt
+-rw-rw-r-- 1 gwhitlock gwhitlock 19 Aug 21 14:19 testfile.txt
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hcc[38;2;153;153;153md /home/gwhitlock/Desktop/workspace[39m[35Dc[39ma[39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [39m [34D[38;2;153;153;153mt testfile2.txt[39m[15D[39mt[39m [39mt[39me[39ms[39mt[39mf[39mi[39ml[39me[39m2[39m.[39mt[39mx[39mt[1m [0m[0m [?1l>[?2004l
+Test123
+ABCD
+abcd
+Test123
+TEST TEST
+TEST 1234
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hrr[38;2;153;153;153mz[39mr[39mm[38;2;153;153;153m [39m[38;2;153;153;153mtestfile* -rf[39m[14D[39m [39mt[39me[39ms[39mt[39mf[39mi[39ml[39me[39m [39m [39m [39m [39m [38;2;153;153;153m* -rf[39m
+Completing file
+[J[0mtestfile2.txt  [Jtestfile.txt [J[A[A[0m[27m[24m[0m[39m[4Crm testfile[38;2;153;153;153m* -rf[39m[K[0m[39m[39m [39m [39m [39m [39m [38;2;153;153;153m* -rf[39m[39m*[39m [39m-[39mf[39m  [38;2;153;153;153mrf[39m[39mr[39mf[?1l>[?2004l
+[J                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hll[38;2;153;153;153ml[39ml[39ml[?1l>[?2004l
+total 0
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004hll[38;2;153;153;153ml[39ml[39ms[38;2;153;153;153mb[39m[38;2;153;153;153mlk[39m[39mu[39m [39m a sb[?1l>[?2004l
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 002: ID 0bc2:ac35 Seagate RSS LLC BUP Portable
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+                                                                                             ]0;gwhitlock@gregdebnas: ~/Desktop/workspace
+[0m[27m[24m[J[32m┌──([1m[32m[34mgwhitlock㉿gregdebnas[0m[34m[32m)-[[1m[32m[39m~/Desktop/workspace[0m[32m]
+└─[1m[32m[34m$[0m[34m[39m [K[?1h=[?2004h
