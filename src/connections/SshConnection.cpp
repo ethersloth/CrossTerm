@@ -149,6 +149,9 @@ void SshConnection::connectSession()
     }
 
     if (pid == 0) {
+        setenv("TERM", "xterm-256color", 1);
+        setenv("COLORTERM", "truecolor", 0);
+
         std::vector<QByteArray> argStore;
         argStore.emplace_back("ssh");
         argStore.emplace_back("-t");

@@ -294,6 +294,20 @@ void TerminalWidget::appendIncoming(const QByteArray &data)
     if (promptDirectoryMatch.hasMatch())
         m_remoteWorkingDirectory = QStringLiteral("$HOME") + promptDirectoryMatch.captured(1);
 
+    const bool transferInProgress = m_zmodem && m_zmodem->isTransferInProgress();
+    const bool hasZmodemHeader = data.contains(QByteArray::fromHex("2A2A1842"))
+        || data.contains(QByteArray::fromHex("2A2A1843"))
+        || data.contains(QByteArray::fromHex("1842303030"))
+        || data.contains(QByteArray::fromHex("1843303030"))
+        || data.contains(QByteArray::fromHex("1818"));
+
+    if (transferInProgress || hasZmodemHeader) {
+        if (!transferInProgress)
+            maybePromptForZModemTransfer(data);
+        update();
+        return;
+    }
+
     m_parser->processBytes(data);
     if (m_zmodemDetectionPending) {
         m_zmodemDetectionTimer->start(150);
@@ -368,9 +382,11 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
     logZModemEvent(QString("Received %1 bytes: %2").arg(data.size()).arg(QString(data.left(100).toHex())));
 
     const QByteArray rawMarkers[] = {
-        QByteArray::fromHex("1818"),
-        QByteArray::fromHex("1A45"),
-        QByteArray::fromHex("1A2A")
+        QByteArray::fromHex("2A2A1842"),
+        QByteArray::fromHex("2A2A1843"),
+        QByteArray::fromHex("1842303030"),
+        QByteArray::fromHex("1843303030"),
+        QByteArray::fromHex("1818")
     };
 
     bool hasRawZmodemSequence = false;
@@ -386,13 +402,16 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
     bool foundCommand = false;
 
     const QString text = QString::fromUtf8(data);
+    const QString submittedCommand = sanitizeCommandLine(m_lastSubmittedCommand).toLower();
     
     if (hasRawZmodemSequence) {
-        // If we see raw ZModem markers, infer from context; default to rz (upload to remote)
-        command = QStringLiteral("rz");
+        const QRegularExpression commandPattern(
+            QStringLiteral("\\b(rz|sz|rb|sb)\\b"),
+            QRegularExpression::CaseInsensitiveOption);
+        const QRegularExpressionMatch match = commandPattern.match(submittedCommand);
+        command = match.hasMatch() ? match.captured(1).toLower() : QStringLiteral("rz");
         foundCommand = true;
     } else {
-        const QString submittedCommand = sanitizeCommandLine(m_lastSubmittedCommand).toLower();
         if (submittedCommand.isEmpty())
             return;
 
