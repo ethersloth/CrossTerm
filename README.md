@@ -115,3 +115,12 @@ third_party/
 ## Reporting issues
 
 Please include the CrossTerm version, operating system, connection type, steps to reproduce, expected behavior, actual behavior, and relevant sanitized logs. For ZModem reports, include the `crossterm_zmodem.log` entries around the transfer.
+
+## License
+
+CrossTerm is licensed under the GNU General Public License, version 2. See [LICENSE](LICENSE).
+
+The repository includes third-party protocol sources with their own license notices:
+
+- `third_party/lrzsz` is distributed under GPL-2.0.
+- `third_party/rzsz-main` is an Apache-2.0 licensed reference implementation.
