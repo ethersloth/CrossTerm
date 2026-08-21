@@ -1,7 +1,10 @@
 #pragma once
 
 #include "IConnection.h"
-#include <QProcess>
+
+#ifdef Q_OS_WIN
+class WindowsPty;
+#endif
 
 class LocalShellConnection final : public IConnection
 {
@@ -19,24 +22,17 @@ public slots:
     void writeData(const QByteArray &data) override;
     void setTerminalSize(int rows, int columns) override;
 
-private slots:
-    void readProcessOutput();
-    void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void processError(QProcess::ProcessError error);
-    void checkProcessStatus();
 private:
-    void setupTerminalMode();
-    void restoreTerminalMode();
-    void setupRawMode();
-
 #ifdef Q_OS_WIN
-    QProcess m_process;
+    WindowsPty *m_pty = nullptr;
 #else
-    mutable int m_masterFd = -1;   // Master side of PTY
-    mutable int m_slavePid = -1;   // Child process PID
-    QByteArray m_originalTermiosSettings;  // Saved terminal settings
+    void readProcessOutput();
+    void restoreTerminalMode();
+
+    int m_masterFd = -1;
+    int m_slavePid = -1;
+    QByteArray m_originalTermiosSettings;
 #endif
     int m_rows = 24;
     int m_columns = 80;
 };
-

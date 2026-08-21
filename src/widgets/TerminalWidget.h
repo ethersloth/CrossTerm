@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QDateTime>
 #include <QWidget>
 #include <QPointer>
 #include <memory>
@@ -7,6 +8,7 @@
 class IConnection;
 class TerminalScreen;
 class TerminalParser;
+class ZModemProtocol;
 
 class TerminalWidget final : public QWidget
 {
@@ -17,6 +19,8 @@ public:
 
     void setConnection(IConnection *connection);
     IConnection *connection() const;
+    void applySessionFont(const QFont &font);
+    void setDownloadDirectory(const QString &directory) { m_downloadDirectory = directory; }
 
 signals:
     void reconnectRequested();
@@ -34,10 +38,28 @@ private slots:
     void showError(const QString &message);
     void updateCursorBlink();
 
+private slots:
+    void onZModemTransferCompleted(bool success, const QString &message);
+    void onZModemTransferProgress(qint64 bytesTransferred, qint64 totalBytes);
+
 private:
     void sendBytes(const QByteArray &data);
     void recalculateFontMetrics();
     void updateTerminalSize();
+    void maybePromptForZModemTransfer(const QByteArray &data);
+    void handleZModemTransferPrompt(const QString &command, bool uploadToRemote);
+
+    bool m_zmodemPromptActive = false;
+    QString m_commandInputBuffer;
+    QString m_lastSubmittedCommand;
+    QString m_pendingZmodemDownloadPath;
+    QString m_remoteZmodemPath;
+    QString m_remoteWorkingDirectory;
+    QString m_downloadDirectory;
+    QByteArray m_promptDetectionBuffer;
+    QString m_lastZmodemCommand;
+    QDateTime m_lastZmodemPrompt;
+    std::unique_ptr<ZModemProtocol> m_zmodem;
 
     QPointer<IConnection> m_connection;
     std::unique_ptr<TerminalScreen> m_screen;

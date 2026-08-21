@@ -43,6 +43,22 @@ dist\windows\bin\CrossTerm.exe
 
 `build_windows.bat` runs `windeployqt`, which places the Qt runtime DLLs and platform plugins next to the executable. SSH sessions require the Windows OpenSSH client (`ssh.exe`) to be available on `PATH`.
 
+## ZModem transfers
+
+SSH ZModem transfers are being ported from the GPL-2.0 `lrzsz` 0.12.20
+implementation. The Windows sender sources are now compiled into the
+CrossTerm executable; the callback-based raw stream adapter is still in
+progress. Until that adapter is complete, the existing helper configuration
+remains available for development testing.
+
+Install or build the GPL-2.0 `lrzsz` tools and provide `sz.exe` and `rz.exe` either:
+
+- next to `CrossTerm.exe` in `dist\windows\bin`,
+- on `PATH`, or
+- through `CROSSTERM_SZ` and `CROSSTERM_RZ` environment variables.
+
+For an upload, CrossTerm runs local `sz` and remote `rz`. For a download, it runs local `rz` and remote `sz`. The separate SSH process uses the saved private-key setting. Password authentication and first-time host-key prompts must already be handled by the SSH configuration, because the transfer channel has no interactive terminal.
+
 ## Project layout
 
 ```text

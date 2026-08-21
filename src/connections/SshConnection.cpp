@@ -1,8 +1,10 @@
 #include "SshConnection.h"
 
+#ifdef Q_OS_WIN
+#include "WindowsPty.h"
+#include <QDir>
+#else
 #include <QSocketNotifier>
-
-#ifndef Q_OS_WIN
 #include <pty.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -25,20 +27,19 @@ SshConnection::SshConnection(const QString &host,
     , m_privateKey(privateKey)
 {
 #ifdef Q_OS_WIN
-    m_process.setProcessChannelMode(QProcess::MergedChannels);
-
-    connect(&m_process, &QProcess::readyRead,
-            this, &SshConnection::readProcessOutput);
-    connect(&m_process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, &SshConnection::processFinished);
-        connect(&m_process, &QProcess::errorOccurred,
-            this, &SshConnection::processError);
+    m_pty = new WindowsPty(this);
+    connect(m_pty, &WindowsPty::dataReceived, this, &IConnection::dataReceived);
+    connect(m_pty, &WindowsPty::exited, this, &SshConnection::disconnectSession);
 #endif
 }
 
 SshConnection::~SshConnection()
 {
+#ifdef Q_OS_WIN
+    m_pty->stop();
+#else
     disconnectSession();
+#endif
 }
 
 QString SshConnection::displayName() const
@@ -52,11 +53,21 @@ QString SshConnection::displayName() const
 bool SshConnection::isConnected() const
 {
 #ifdef Q_OS_WIN
-    return m_process.state() != QProcess::NotRunning;
+    return m_pty->isRunning();
 #else
     return m_masterFd != -1;
 #endif
 }
+
+QString SshConnection::buildTarget() const
+{
+    if (m_username.trimmed().isEmpty()) {
+        return m_host;
+    }
+    return QStringLiteral("%1@%2").arg(m_username, m_host);
+}
+
+#ifdef Q_OS_WIN
 
 void SshConnection::connectSession()
 {
@@ -68,27 +79,58 @@ void SshConnection::connectSession()
         return;
     }
 
-#ifdef Q_OS_WIN
-    QStringList args;
-    args << QStringLiteral("-p") << QString::number(m_port);
-    if (!m_privateKey.trimmed().isEmpty()) {
-        args << QStringLiteral("-i") << m_privateKey;
-    }
+    // -t forces remote pty allocation; the pseudo console makes our stdin a real
+    // terminal, so ssh can also prompt for passwords and host-key confirmation.
+    QString commandLine = QStringLiteral("ssh -t -p %1").arg(m_port);
+    if (!m_privateKey.trimmed().isEmpty())
+        commandLine += QStringLiteral(" -i \"%1\"").arg(QDir::toNativeSeparators(m_privateKey.trimmed()));
+    commandLine += QStringLiteral(" \"%1\"").arg(buildTarget());
 
-    QString target = m_host;
-    if (!m_username.trimmed().isEmpty()) {
-        target = QStringLiteral("%1@%2").arg(m_username, m_host);
-    }
-    args << target;
-
-    m_process.start(QStringLiteral("ssh"), args);
-    if (!m_process.waitForStarted(5000)) {
-        emit errorOccurred(QStringLiteral("Unable to start ssh client"));
+    QString error;
+    if (!m_pty->start(commandLine, m_rows, m_columns, &error)) {
+        emit errorOccurred(error);
         return;
     }
 
     emit connected();
-#else
+}
+
+void SshConnection::disconnectSession()
+{
+    if (!isConnected())
+        return;
+
+    m_pty->stop();
+    emit disconnected();
+}
+
+void SshConnection::writeData(const QByteArray &data)
+{
+    m_pty->write(data);
+}
+
+void SshConnection::setTerminalSize(int rows, int columns)
+{
+    if (rows < 1 || columns < 1)
+        return;
+
+    m_rows = rows;
+    m_columns = columns;
+    m_pty->resize(rows, columns);
+}
+
+#else // !Q_OS_WIN
+
+void SshConnection::connectSession()
+{
+    if (isConnected())
+        return;
+
+    if (m_host.trimmed().isEmpty()) {
+        emit errorOccurred(QStringLiteral("SSH host is required"));
+        return;
+    }
+
     int masterFd = -1;
     pid_t pid = forkpty(&masterFd, nullptr, nullptr, nullptr);
 
@@ -98,10 +140,7 @@ void SshConnection::connectSession()
     }
 
     if (pid == 0) {
-        QByteArray cmd = "ssh";
         std::vector<QByteArray> argStore;
-        std::vector<char *> argv;
-
         argStore.emplace_back("ssh");
         argStore.emplace_back("-t");
         argStore.emplace_back("-p");
@@ -109,19 +148,19 @@ void SshConnection::connectSession()
 
         if (!m_privateKey.trimmed().isEmpty()) {
             argStore.emplace_back("-i");
-            argStore.emplace_back(m_privateKey.toUtf8());
+            argStore.emplace_back(m_privateKey.trimmed().toUtf8());
         }
 
-        QString target = buildTarget();
-        argStore.emplace_back(target.toUtf8());
+        argStore.emplace_back(buildTarget().toUtf8());
 
+        std::vector<char *> argv;
         argv.reserve(argStore.size() + 1);
         for (QByteArray &arg : argStore) {
             argv.push_back(arg.data());
         }
         argv.push_back(nullptr);
 
-        execvp(cmd.constData(), argv.data());
+        execvp("ssh", argv.data());
         _exit(127);
     }
 
@@ -137,7 +176,6 @@ void SshConnection::connectSession()
     connect(notifier, &QSocketNotifier::activated, this, &SshConnection::readProcessOutput);
 
     emit connected();
-#endif
 }
 
 void SshConnection::disconnectSession()
@@ -145,13 +183,6 @@ void SshConnection::disconnectSession()
     if (!isConnected())
         return;
 
-#ifdef Q_OS_WIN
-    m_process.terminate();
-    if (!m_process.waitForFinished(1000)) {
-        m_process.kill();
-        m_process.waitForFinished(1000);
-    }
-#else
     if (m_masterFd != -1) {
         close(m_masterFd);
         m_masterFd = -1;
@@ -174,24 +205,17 @@ void SshConnection::disconnectSession()
 
         m_childPid = -1;
     }
-#endif
 
     emit disconnected();
 }
 
 void SshConnection::writeData(const QByteArray &data)
 {
-    if (!isConnected())
+    if (m_masterFd == -1)
         return;
 
-#ifdef Q_OS_WIN
-    m_process.write(data);
-#else
-    if (m_masterFd != -1) {
-        ssize_t written = write(m_masterFd, data.constData(), data.size());
-        (void)written;
-    }
-#endif
+    ssize_t written = write(m_masterFd, data.constData(), data.size());
+    (void)written;
 }
 
 void SshConnection::setTerminalSize(int rows, int columns)
@@ -202,61 +226,30 @@ void SshConnection::setTerminalSize(int rows, int columns)
     m_rows = rows;
     m_columns = columns;
 
-#ifndef Q_OS_WIN
     if (m_masterFd == -1)
         return;
 
-    struct winsize ws;
+    struct winsize ws{};
     ws.ws_row = static_cast<unsigned short>(rows);
     ws.ws_col = static_cast<unsigned short>(columns);
-    ws.ws_xpixel = 0;
-    ws.ws_ypixel = 0;
 
     if (ioctl(m_masterFd, TIOCSWINSZ, &ws) == 0 && m_childPid > 0) {
         kill(m_childPid, SIGWINCH);
     }
-#endif
 }
 
 void SshConnection::readProcessOutput()
 {
-#ifdef Q_OS_WIN
-    if (m_process.bytesAvailable() > 0) {
-        emit dataReceived(m_process.readAll());
+    if (m_masterFd == -1)
+        return;
+
+    char buffer[4096];
+    ssize_t n = read(m_masterFd, buffer, sizeof(buffer));
+    if (n > 0) {
+        emit dataReceived(QByteArray(buffer, static_cast<int>(n)));
+    } else if (n <= 0 && (errno == EIO || errno == EBADF)) {
+        disconnectSession();
     }
-#else
-    if (m_masterFd != -1) {
-        char buffer[4096];
-        ssize_t n = read(m_masterFd, buffer, sizeof(buffer));
-        if (n > 0) {
-            emit dataReceived(QByteArray(buffer, static_cast<int>(n)));
-        } else if (n <= 0 && (errno == EIO || errno == EBADF)) {
-            disconnectSession();
-        }
-    }
-#endif
 }
 
-void SshConnection::processFinished(int, QProcess::ExitStatus)
-{
-#ifdef Q_OS_WIN
-    emit disconnected();
-#endif
-}
-
-void SshConnection::processError(QProcess::ProcessError)
-{
-#ifdef Q_OS_WIN
-    emit errorOccurred(m_process.errorString());
-#endif
-}
-
-#ifndef Q_OS_WIN
-QString SshConnection::buildTarget() const
-{
-    if (m_username.trimmed().isEmpty()) {
-        return m_host;
-    }
-    return QStringLiteral("%1@%2").arg(m_username, m_host);
-}
-#endif
+#endif // Q_OS_WIN

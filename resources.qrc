@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/icons">
         <file>assets/app_icon.png</file>
+        <file>assets/cross_term_logo.png</file>
     </qresource>
 </RCC>

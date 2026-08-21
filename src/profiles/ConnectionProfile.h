@@ -68,6 +68,18 @@ public:
     int telnetPort() const { return property(QStringLiteral("telnet_port"), QStringLiteral("23")).toInt(); }
     void setTelnetPort(int port) { setProperty(QStringLiteral("telnet_port"), QString::number(port)); }
 
+    QString fontFamily() const { return property(QStringLiteral("font_family"), QStringLiteral("Consolas")); }
+    void setFontFamily(const QString &family) { setProperty(QStringLiteral("font_family"), family); }
+
+    int fontSize() const { return property(QStringLiteral("font_size"), QStringLiteral("12")).toInt(); }
+    void setFontSize(int pointSize) { setProperty(QStringLiteral("font_size"), QString::number(pointSize)); }
+
+    QString terminalType() const { return property(QStringLiteral("terminal_type"), QStringLiteral("xterm")); }
+    void setTerminalType(const QString &terminalType) { setProperty(QStringLiteral("terminal_type"), terminalType); }
+
+    QString downloadDirectory() const { return property(QStringLiteral("download_directory")); }
+    void setDownloadDirectory(const QString &directory) { setProperty(QStringLiteral("download_directory"), directory); }
+
     // Serialization
     QJsonObject toJson() const;
     static ConnectionProfile fromJson(const QJsonObject &obj);

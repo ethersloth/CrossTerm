@@ -11,6 +11,8 @@ class QSpinBox;
 class QCheckBox;
 class QPushButton;
 class QStackedWidget;
+class QListWidget;
+class QFontComboBox;
 
 /**
  * Dialog for creating new sessions and managing connection profiles.
@@ -31,6 +33,7 @@ private slots:
     void onLoadProfileClicked();
     void onSaveProfileClicked();
     void onProfileSelected(int index);
+    void onCategoryChanged(int row);
 
 private:
     void buildUi();
@@ -38,6 +41,7 @@ private:
     void buildSSHUI();
     void buildSerialUI();
     void buildTelnetUI();
+    void buildCategoryPages();
     void populateProfileList();
     void loadProfileIntoUI(const ConnectionProfile &profile);
 
@@ -45,6 +49,15 @@ private:
     QComboBox *m_connectionTypeCombo = nullptr;
     QComboBox *m_profileCombo = nullptr;
     QStackedWidget *m_optionsStack = nullptr;
+    QListWidget *m_categoryList = nullptr;
+    QComboBox *m_sshAuthMethod = nullptr;
+    QComboBox *m_terminalTypeCombo = nullptr;
+    QSpinBox *m_scrollbackSpin = nullptr;
+    QComboBox *m_colorSchemeCombo = nullptr;
+    QComboBox *m_backgroundCombo = nullptr;
+    QSpinBox *m_transparencySpin = nullptr;
+    QFontComboBox *m_fontCombo = nullptr;
+    QSpinBox *m_fontSizeSpin = nullptr;
 
     // Local Shell widgets
     QLineEdit *m_localShellCmd = nullptr;
@@ -77,4 +90,6 @@ private:
     QCheckBox *m_logSessionCheck = nullptr;
     QLineEdit *m_logPathEdit = nullptr;
     QPushButton *m_logBrowseBtn = nullptr;
+    QLineEdit *m_downloadDirectoryEdit = nullptr;
+    QPushButton *m_downloadDirectoryBrowseBtn = nullptr;
 };

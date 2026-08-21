@@ -12,6 +12,8 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QStackedWidget>
+#include <QListWidget>
+#include <QFontComboBox>
 #include <QGroupBox>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -23,8 +25,9 @@
 NewSessionDialog::NewSessionDialog(ProfileManager &profileManager, QWidget *parent)
     : QDialog(parent), m_profileManager(profileManager)
 {
-    setWindowTitle(QStringLiteral("New Session"));
-    setMinimumWidth(500);
+    setWindowTitle(QStringLiteral("Session Options"));
+    resize(920, 640);
+    setMinimumWidth(760);
     buildUi();
     populateProfileList();
 }
@@ -38,6 +41,14 @@ ConnectionProfile NewSessionDialog::createProfile() const
                              QStringLiteral("New Session") : m_profileName->text(), 
                              type);
 
+    profile.setProperty(QStringLiteral("terminal_type"), m_terminalTypeCombo ? m_terminalTypeCombo->currentText() : QStringLiteral("xterm"));
+    profile.setProperty(QStringLiteral("scrollback_lines"), m_scrollbackSpin ? QString::number(m_scrollbackSpin->value()) : QStringLiteral("10000"));
+    profile.setProperty(QStringLiteral("font_family"), m_fontCombo ? m_fontCombo->currentFont().family() : QStringLiteral("Consolas"));
+    profile.setProperty(QStringLiteral("font_size"), m_fontSizeSpin ? QString::number(m_fontSizeSpin->value()) : QStringLiteral("12"));
+    profile.setProperty(QStringLiteral("color_scheme"), m_colorSchemeCombo ? m_colorSchemeCombo->currentText() : QStringLiteral("Standard"));
+    profile.setProperty(QStringLiteral("background"), m_backgroundCombo ? m_backgroundCombo->currentText() : QStringLiteral("Black"));
+    profile.setProperty(QStringLiteral("transparency"), m_transparencySpin ? QString::number(m_transparencySpin->value()) : QStringLiteral("255"));
+
     switch (type) {
     case ConnectionProfile::ConnectionType::LocalShell:
         // Local shell typically doesn't need saved settings
@@ -47,6 +58,7 @@ ConnectionProfile NewSessionDialog::createProfile() const
         profile.setSshHost(m_sshHost->text());
         profile.setSshPort(m_sshPort->value());
         profile.setSshUsername(m_sshUsername->text());
+        profile.setProperty(QStringLiteral("ssh_auth_method"), m_sshAuthMethod ? m_sshAuthMethod->currentText() : QStringLiteral("Password"));
         if (!m_sshUseKey->isChecked()) {
             profile.setSshPassword(m_sshPassword->text());
         } else {
@@ -69,6 +81,7 @@ ConnectionProfile NewSessionDialog::createProfile() const
     profile.setProperty(QStringLiteral("session_log_enabled"),
                         m_logSessionCheck->isChecked() ? QStringLiteral("1") : QStringLiteral("0"));
     profile.setProperty(QStringLiteral("session_log_path"), m_logPathEdit->text().trimmed());
+    profile.setDownloadDirectory(m_downloadDirectoryEdit->text().trimmed());
 
     return profile;
 }
@@ -94,81 +107,44 @@ bool NewSessionDialog::selectProfile(const QString &profileName)
 
 void NewSessionDialog::buildUi()
 {
-    auto *mainLayout = new QVBoxLayout(this);
+    auto *outerLayout = new QHBoxLayout(this);
+    outerLayout->setContentsMargins(12, 12, 12, 12);
+    outerLayout->setSpacing(10);
 
-    // Profile section
-    auto *profileGroup = new QGroupBox(QStringLiteral("Profile Management"), this);
-    auto *profileLayout = new QFormLayout(profileGroup);
+    m_categoryList = new QListWidget(this);
+    m_categoryList->setFixedWidth(220);
+    m_categoryList->setAlternatingRowColors(false);
+    m_categoryList->addItem(QStringLiteral("Connection"));
+    m_categoryList->addItem(QStringLiteral("SSH2"));
+    m_categoryList->addItem(QStringLiteral("Port Forwarding"));
+    m_categoryList->addItem(QStringLiteral("Terminal"));
+    m_categoryList->addItem(QStringLiteral("Appearance"));
+    m_categoryList->addItem(QStringLiteral("Advanced"));
+    m_categoryList->setCurrentRow(0);
+    outerLayout->addWidget(m_categoryList);
 
-    m_profileCombo = new QComboBox(this);
-    profileLayout->addRow(QStringLiteral("Load Profile:"), m_profileCombo);
+    auto *rightPanel = new QWidget(this);
+    auto *rightLayout = new QVBoxLayout(rightPanel);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->setSpacing(8);
 
-    m_profileName = new QLineEdit(this);
-    m_profileName->setPlaceholderText(QStringLiteral("Name for saving this profile"));
-    profileLayout->addRow(QStringLiteral("Profile Name:"), m_profileName);
-
-    auto *profileBtnLayout = new QHBoxLayout();
-    m_loadProfileBtn = new QPushButton(QStringLiteral("Load"), this);
-    m_saveProfileBtn = new QPushButton(QStringLiteral("Save"), this);
-    profileBtnLayout->addWidget(m_loadProfileBtn);
-    profileBtnLayout->addWidget(m_saveProfileBtn);
-    profileLayout->addRow(profileBtnLayout);
-
-    mainLayout->addWidget(profileGroup);
-
-    // Connection type
-    auto *typeLayout = new QFormLayout();
-    m_connectionTypeCombo = new QComboBox(this);
-    m_connectionTypeCombo->addItem(QStringLiteral("Local Shell"));
-    m_connectionTypeCombo->addItem(QStringLiteral("SSH"));
-    m_connectionTypeCombo->addItem(QStringLiteral("Serial"));
-    m_connectionTypeCombo->addItem(QStringLiteral("Telnet"));
-    typeLayout->addRow(QStringLiteral("Connection Type:"), m_connectionTypeCombo);
-    mainLayout->addLayout(typeLayout);
-
-    // Stacked widget for connection options
     m_optionsStack = new QStackedWidget(this);
+    buildCategoryPages();
+    rightLayout->addWidget(m_optionsStack, 1);
 
-    buildLocalShellUI();
-    buildSSHUI();
-    buildSerialUI();
-    buildTelnetUI();
-
-    mainLayout->addWidget(m_optionsStack);
-
-    // Session logging options
-    auto *loggingGroup = new QGroupBox(QStringLiteral("Session Logging"), this);
-    auto *loggingLayout = new QFormLayout(loggingGroup);
-
-    m_logSessionCheck = new QCheckBox(QStringLiteral("Log this session to a file"), this);
-    loggingLayout->addRow(m_logSessionCheck);
-
-    auto *logPathRow = new QWidget(this);
-    auto *logPathLayout = new QHBoxLayout(logPathRow);
-    logPathLayout->setContentsMargins(0, 0, 0, 0);
-    logPathLayout->setSpacing(6);
-
-    m_logPathEdit = new QLineEdit(this);
-    m_logPathEdit->setPlaceholderText(QStringLiteral("Optional: explicit log file path"));
-    m_logBrowseBtn = new QPushButton(QStringLiteral("Browse..."), this);
-    logPathLayout->addWidget(m_logPathEdit, 1);
-    logPathLayout->addWidget(m_logBrowseBtn);
-    loggingLayout->addRow(QStringLiteral("Log File:"), logPathRow);
-
-    mainLayout->addWidget(loggingGroup);
-
-    // Buttons
     auto *buttonLayout = new QHBoxLayout();
     buttonLayout->addStretch();
-    
-    auto *cancelBtn = new QPushButton(QStringLiteral("Cancel"), this);
-    auto *connectBtn = new QPushButton(QStringLiteral("Connect"), this);
-    connectBtn->setDefault(true);
-    
-    buttonLayout->addWidget(cancelBtn);
-    buttonLayout->addWidget(connectBtn);
-    mainLayout->addLayout(buttonLayout);
 
+    auto *cancelBtn = new QPushButton(QStringLiteral("Cancel"), this);
+    auto *connectBtn = new QPushButton(QStringLiteral("OK"), this);
+    connectBtn->setDefault(true);
+    buttonLayout->addWidget(connectBtn);
+    buttonLayout->addWidget(cancelBtn);
+    rightLayout->addLayout(buttonLayout);
+
+    outerLayout->addWidget(rightPanel, 1);
+
+    connect(m_categoryList, &QListWidget::currentRowChanged, this, &NewSessionDialog::onCategoryChanged);
     connect(m_connectionTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &NewSessionDialog::onConnectionTypeChanged);
     connect(m_loadProfileBtn, &QPushButton::clicked, this, &NewSessionDialog::onLoadProfileClicked);
@@ -205,6 +181,197 @@ void NewSessionDialog::buildUi()
                                                  QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/logs")).toString();
     m_logSessionCheck->setChecked(defaultLogEnabled);
     m_logPathEdit->setText(defaultLogDir);
+}
+
+void NewSessionDialog::buildCategoryPages()
+{
+    auto *connectionPage = new QWidget(this);
+    auto *connectionLayout = new QFormLayout(connectionPage);
+    connectionLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_profileCombo = new QComboBox(this);
+    connectionLayout->addRow(QStringLiteral("Profile:"), m_profileCombo);
+
+    m_profileName = new QLineEdit(this);
+    m_profileName->setPlaceholderText(QStringLiteral("Session name"));
+    connectionLayout->addRow(QStringLiteral("Name:"), m_profileName);
+
+    auto *profileActionLayout = new QHBoxLayout();
+    m_loadProfileBtn = new QPushButton(QStringLiteral("Load"), this);
+    m_saveProfileBtn = new QPushButton(QStringLiteral("Save"), this);
+    profileActionLayout->addWidget(m_loadProfileBtn);
+    profileActionLayout->addWidget(m_saveProfileBtn);
+    connectionLayout->addRow(QStringLiteral(""), profileActionLayout);
+
+    m_connectionTypeCombo = new QComboBox(this);
+    m_connectionTypeCombo->addItem(QStringLiteral("Local Shell"));
+    m_connectionTypeCombo->addItem(QStringLiteral("SSH"));
+    m_connectionTypeCombo->addItem(QStringLiteral("Serial"));
+    m_connectionTypeCombo->addItem(QStringLiteral("Telnet"));
+    connectionLayout->addRow(QStringLiteral("Connection Type:"), m_connectionTypeCombo);
+
+    auto *hostLayout = new QHBoxLayout();
+    m_sshHost = new QLineEdit(this);
+    m_sshHost->setPlaceholderText(QStringLiteral("example.com"));
+    hostLayout->addWidget(m_sshHost, 1);
+    connectionLayout->addRow(QStringLiteral("Host:"), hostLayout);
+
+    m_sshPort = new QSpinBox(this);
+    m_sshPort->setMinimum(1);
+    m_sshPort->setMaximum(65535);
+    m_sshPort->setValue(22);
+    connectionLayout->addRow(QStringLiteral("Port:"), m_sshPort);
+
+    m_sshUsername = new QLineEdit(this);
+    m_sshUsername->setPlaceholderText(QStringLiteral("username"));
+    connectionLayout->addRow(QStringLiteral("Username:"), m_sshUsername);
+
+    m_sshPassword = new QLineEdit(this);
+    m_sshPassword->setEchoMode(QLineEdit::Password);
+    m_sshPassword->setPlaceholderText(QStringLiteral("password"));
+    connectionLayout->addRow(QStringLiteral("Password:"), m_sshPassword);
+
+    m_sshUseKey = new QCheckBox(QStringLiteral("Use private key"), this);
+    connectionLayout->addRow(QStringLiteral("Authentication:"), m_sshUseKey);
+
+    m_sshPrivateKey = new QLineEdit(this);
+    m_sshPrivateKey->setPlaceholderText(QStringLiteral("~/.ssh/id_rsa"));
+    auto *keyRow = new QWidget(this);
+    auto *keyLayout = new QHBoxLayout(keyRow);
+    keyLayout->setContentsMargins(0, 0, 0, 0);
+    auto *browsePrivateKeyBtn = new QPushButton(QStringLiteral("Browse..."), this);
+    keyLayout->addWidget(m_sshPrivateKey, 1);
+    keyLayout->addWidget(browsePrivateKeyBtn);
+    connectionLayout->addRow(QStringLiteral("Private Key:"), keyRow);
+
+    connect(browsePrivateKeyBtn, &QPushButton::clicked, this, [this]() {
+        QString startPath = m_sshPrivateKey->text().trimmed();
+        if (startPath.isEmpty())
+            startPath = QDir::homePath() + QStringLiteral("/.ssh");
+        const QString filePath = QFileDialog::getOpenFileName(
+            this,
+            QStringLiteral("Select SSH Private Key"),
+            startPath,
+            QStringLiteral("All Files (*)"));
+        if (!filePath.isEmpty())
+            m_sshPrivateKey->setText(filePath);
+    });
+
+    auto *loggingGroup = new QGroupBox(QStringLiteral("Session Logging"), this);
+    auto *loggingLayout = new QFormLayout(loggingGroup);
+    m_logSessionCheck = new QCheckBox(QStringLiteral("Log this session to a file"), this);
+    loggingLayout->addRow(m_logSessionCheck);
+
+    auto *logPathRow = new QWidget(this);
+    auto *logPathBox = new QHBoxLayout(logPathRow);
+    logPathBox->setContentsMargins(0, 0, 0, 0);
+    logPathBox->setSpacing(6);
+    m_logPathEdit = new QLineEdit(this);
+    m_logBrowseBtn = new QPushButton(QStringLiteral("Browse..."), this);
+    logPathBox->addWidget(m_logPathEdit, 1);
+    logPathBox->addWidget(m_logBrowseBtn);
+    loggingLayout->addRow(QStringLiteral("Log File:"), logPathRow);
+    connectionLayout->addRow(loggingGroup);
+
+    auto *downloadRow = new QWidget(this);
+    auto *downloadLayout = new QHBoxLayout(downloadRow);
+    downloadLayout->setContentsMargins(0, 0, 0, 0);
+    m_downloadDirectoryEdit = new QLineEdit(this);
+    m_downloadDirectoryBrowseBtn = new QPushButton(QStringLiteral("Browse..."), this);
+    downloadLayout->addWidget(m_downloadDirectoryEdit, 1);
+    downloadLayout->addWidget(m_downloadDirectoryBrowseBtn);
+    connectionLayout->addRow(QStringLiteral("ZModem download folder:"), downloadRow);
+    connect(m_downloadDirectoryBrowseBtn, &QPushButton::clicked, this, [this]() {
+        QString startPath = m_downloadDirectoryEdit->text().trimmed();
+        if (startPath.isEmpty())
+            startPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+        const QString directory = QFileDialog::getExistingDirectory(
+            this, QStringLiteral("Select ZModem Download Folder"), startPath);
+        if (!directory.isEmpty())
+            m_downloadDirectoryEdit->setText(directory);
+    });
+    m_optionsStack->addWidget(connectionPage);
+
+    auto *sshPage = new QWidget(this);
+    auto *sshLayout = new QFormLayout(sshPage);
+    sshLayout->setContentsMargins(0, 0, 0, 0);
+    m_sshAuthMethod = new QComboBox(this);
+    m_sshAuthMethod->addItem(QStringLiteral("Password"));
+    m_sshAuthMethod->addItem(QStringLiteral("Public Key"));
+    m_sshAuthMethod->addItem(QStringLiteral("Agent"));
+    sshLayout->addRow(QStringLiteral("Preferred auth method:"), m_sshAuthMethod);
+    auto *sshBanner = new QLabel(QStringLiteral("Use SSH public key authentication, password, or agent-based login."), this);
+    sshBanner->setWordWrap(true);
+    sshLayout->addRow(QStringLiteral(""), sshBanner);
+    m_optionsStack->addWidget(sshPage);
+
+    auto *forwardPage = new QWidget(this);
+    auto *forwardLayout = new QFormLayout(forwardPage);
+    forwardLayout->setContentsMargins(0, 0, 0, 0);
+    forwardLayout->addRow(QStringLiteral("Local forwarding:"), new QLineEdit(QStringLiteral("127.0.0.1:8080 -> localhost:80"), this));
+    forwardLayout->addRow(QStringLiteral("Remote forwarding:"), new QLineEdit(QStringLiteral("127.0.0.1:2222 -> localhost:22"), this));
+    forwardLayout->addRow(QStringLiteral("X11 forwarding:"), new QCheckBox(QStringLiteral("Enable X11 forwarding"), this));
+    m_optionsStack->addWidget(forwardPage);
+
+    auto *terminalPage = new QWidget(this);
+    auto *terminalLayout = new QFormLayout(terminalPage);
+    terminalLayout->setContentsMargins(0, 0, 0, 0);
+    m_terminalTypeCombo = new QComboBox(this);
+    m_terminalTypeCombo->addItem(QStringLiteral("xterm"));
+    m_terminalTypeCombo->addItem(QStringLiteral("xterm-256color"));
+    m_terminalTypeCombo->addItem(QStringLiteral("vt100"));
+    m_terminalTypeCombo->addItem(QStringLiteral("screen"));
+    terminalLayout->addRow(QStringLiteral("Terminal type:"), m_terminalTypeCombo);
+    m_scrollbackSpin = new QSpinBox(this);
+    m_scrollbackSpin->setRange(100, 100000);
+    m_scrollbackSpin->setValue(10000);
+    terminalLayout->addRow(QStringLiteral("Scrollback lines:"), m_scrollbackSpin);
+    terminalLayout->addRow(QStringLiteral("Remote terminal bell:"), new QCheckBox(QStringLiteral("Enable bell"), this));
+    m_optionsStack->addWidget(terminalPage);
+
+    auto *appearancePage = new QWidget(this);
+    auto *appearanceLayout = new QFormLayout(appearancePage);
+    appearanceLayout->setContentsMargins(0, 0, 0, 0);
+    m_colorSchemeCombo = new QComboBox(this);
+    m_colorSchemeCombo->addItem(QStringLiteral("Standard"));
+    m_colorSchemeCombo->addItem(QStringLiteral("Dark"));
+    m_colorSchemeCombo->addItem(QStringLiteral("Solarized Dark"));
+    m_colorSchemeCombo->addItem(QStringLiteral("Solarized Light"));
+    appearanceLayout->addRow(QStringLiteral("Color scheme:"), m_colorSchemeCombo);
+    m_backgroundCombo = new QComboBox(this);
+    m_backgroundCombo->addItem(QStringLiteral("Black"));
+    m_backgroundCombo->addItem(QStringLiteral("Dark Gray"));
+    m_backgroundCombo->addItem(QStringLiteral("Custom"));
+    appearanceLayout->addRow(QStringLiteral("Background:"), m_backgroundCombo);
+    m_transparencySpin = new QSpinBox(this);
+    m_transparencySpin->setRange(0, 255);
+    m_transparencySpin->setValue(255);
+    appearanceLayout->addRow(QStringLiteral("Transparency:"), m_transparencySpin);
+    m_fontCombo = new QFontComboBox(this);
+    m_fontCombo->setCurrentFont(QFont(QStringLiteral("Consolas")));
+    appearanceLayout->addRow(QStringLiteral("Font:"), m_fontCombo);
+    m_fontSizeSpin = new QSpinBox(this);
+    m_fontSizeSpin->setRange(6, 64);
+    m_fontSizeSpin->setValue(12);
+    appearanceLayout->addRow(QStringLiteral("Font size:"), m_fontSizeSpin);
+    m_optionsStack->addWidget(appearancePage);
+
+    auto *advancedPage = new QWidget(this);
+    auto *advancedLayout = new QFormLayout(advancedPage);
+    advancedLayout->setContentsMargins(0, 0, 0, 0);
+    advancedLayout->addRow(QStringLiteral("Keep alive:"), new QCheckBox(QStringLiteral("Enable keepalive"), this));
+    advancedLayout->addRow(QStringLiteral("Compression:"), new QCheckBox(QStringLiteral("Enable compression"), this));
+    advancedLayout->addRow(QStringLiteral("Custom command:"), new QLineEdit(this));
+    m_optionsStack->addWidget(advancedPage);
+}
+
+void NewSessionDialog::onCategoryChanged(int row)
+{
+    if (!m_optionsStack || row < 0)
+        return;
+
+    const int index = qMin(row, m_optionsStack->count() - 1);
+    m_optionsStack->setCurrentIndex(index);
 }
 
 void NewSessionDialog::buildLocalShellUI()
@@ -400,6 +567,41 @@ void NewSessionDialog::loadProfileIntoUI(const ConnectionProfile &profile)
     m_connectionTypeCombo->setCurrentIndex(static_cast<int>(profile.type()));
     m_profileName->setText(profile.name());
 
+    if (m_terminalTypeCombo) {
+        const QString terminalType = profile.terminalType();
+        const int terminalIndex = m_terminalTypeCombo->findText(terminalType);
+        if (terminalIndex >= 0)
+            m_terminalTypeCombo->setCurrentIndex(terminalIndex);
+    }
+    if (m_downloadDirectoryEdit)
+        m_downloadDirectoryEdit->setText(profile.downloadDirectory());
+    if (m_scrollbackSpin)
+        m_scrollbackSpin->setValue(profile.property(QStringLiteral("scrollback_lines"), QStringLiteral("10000")).toInt());
+    if (m_fontCombo) {
+        const QString fontFamily = profile.fontFamily();
+        const int fontIndex = m_fontCombo->findText(fontFamily);
+        if (fontIndex >= 0)
+            m_fontCombo->setCurrentIndex(fontIndex);
+        else
+            m_fontCombo->setCurrentFont(QFont(fontFamily));
+    }
+    if (m_fontSizeSpin)
+        m_fontSizeSpin->setValue(profile.fontSize());
+    if (m_colorSchemeCombo) {
+        const QString colorScheme = profile.property(QStringLiteral("color_scheme"), QStringLiteral("Standard"));
+        const int idx = m_colorSchemeCombo->findText(colorScheme);
+        if (idx >= 0)
+            m_colorSchemeCombo->setCurrentIndex(idx);
+    }
+    if (m_backgroundCombo) {
+        const QString background = profile.property(QStringLiteral("background"), QStringLiteral("Black"));
+        const int idx = m_backgroundCombo->findText(background);
+        if (idx >= 0)
+            m_backgroundCombo->setCurrentIndex(idx);
+    }
+    if (m_transparencySpin)
+        m_transparencySpin->setValue(profile.property(QStringLiteral("transparency"), QStringLiteral("255")).toInt());
+
     switch (profile.type()) {
     case ConnectionProfile::ConnectionType::LocalShell:
         // Nothing to load
@@ -409,6 +611,12 @@ void NewSessionDialog::loadProfileIntoUI(const ConnectionProfile &profile)
         m_sshHost->setText(profile.sshHost());
         m_sshPort->setValue(profile.sshPort());
         m_sshUsername->setText(profile.sshUsername());
+        if (m_sshAuthMethod) {
+            const QString authMethod = profile.property(QStringLiteral("ssh_auth_method"), QStringLiteral("Password"));
+            const int authIndex = m_sshAuthMethod->findText(authMethod);
+            if (authIndex >= 0)
+                m_sshAuthMethod->setCurrentIndex(authIndex);
+        }
         if (!profile.sshPrivateKey().isEmpty()) {
             m_sshUseKey->setChecked(true);
             m_sshPrivateKey->setText(profile.sshPrivateKey());

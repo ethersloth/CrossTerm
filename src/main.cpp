@@ -10,11 +10,11 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QApplication::setApplicationName("CrossTerm");
     QApplication::setOrganizationName("CrossTerm");
-    QApplication::setApplicationVersion("0.1.0");
+    QApplication::setApplicationVersion("0.4.0");
     QGuiApplication::setDesktopFileName(QStringLiteral("crossterm"));
 
     QIcon appIcon;
-    const QPixmap baseIcon(QStringLiteral(":/icons/app_icon.png"));
+    const QPixmap baseIcon(QStringLiteral(":/icons/assets/cross_term_logo.png"));
     if (!baseIcon.isNull()) {
         const QList<int> sizes = {16, 24, 32, 48, 64, 96, 128, 256, 512};
         for (int size : sizes) {

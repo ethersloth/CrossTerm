@@ -1,0 +1,28 @@
+[package]
+name = "rzsz"
+version = "0.1.4"
+edition = "2021"
+description = "X/Y/ZModem file transfer tool — a modern Rust rewrite of lrzsz. Single binary, drop-in rz/sz replacement."
+license = "Apache-2.0"
+repository = "https://github.com/kookob/rzsz"
+homepage = "https://github.com/kookob/rzsz"
+readme = "README.md"
+keywords = ["zmodem", "xmodem", "ymodem", "file-transfer", "terminal"]
+categories = ["command-line-utilities", "network-programming"]
+exclude = ["tests/", ".github/", "SUMMARY.md"]
+
+[[bin]]
+name = "zz"
+path = "src/bin/zz.rs"
+
+[dependencies]
+nix = { version = "0.29", features = ["term", "poll", "signal", "fs"] }
+signal-hook = "0.3"
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+panic = "abort"

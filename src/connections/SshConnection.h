@@ -1,7 +1,10 @@
 #pragma once
 
 #include "IConnection.h"
-#include <QProcess>
+
+#ifdef Q_OS_WIN
+class WindowsPty;
+#endif
 
 class SshConnection final : public IConnection
 {
@@ -17,21 +20,19 @@ public:
     QString displayName() const override;
     bool isConnected() const override;
 
+    QString host() const { return m_host; }
+    int port() const { return m_port; }
+    QString username() const { return m_username; }
+    QString privateKey() const { return m_privateKey; }
+
 public slots:
     void connectSession() override;
     void disconnectSession() override;
     void writeData(const QByteArray &data) override;
     void setTerminalSize(int rows, int columns) override;
 
-private slots:
-    void readProcessOutput();
-    void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void processError(QProcess::ProcessError error);
-
 private:
-#ifndef Q_OS_WIN
     QString buildTarget() const;
-#endif
 
     QString m_host;
     int m_port = 22;
@@ -39,8 +40,10 @@ private:
     QString m_privateKey;
 
 #ifdef Q_OS_WIN
-    QProcess m_process;
+    WindowsPty *m_pty = nullptr;
 #else
+    void readProcessOutput();
+
     int m_masterFd = -1;
     int m_childPid = -1;
 #endif

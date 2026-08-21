@@ -40,7 +40,7 @@ constexpr int RoleProfileName = Qt::UserRole + 1;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_profileManager(new ProfileManager())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.3.0"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.4.0"));
     resize(1200, 760);
 
     // Load saved profiles
@@ -314,7 +314,10 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         return;
 
     auto *terminal = new TerminalWidget(m_tabs);
-    
+    const QFont sessionFont(profile.fontFamily(), profile.fontSize());
+    terminal->applySessionFont(sessionFont);
+    terminal->setDownloadDirectory(profile.downloadDirectory());
+
     // Create connection based on profile type
     IConnection *connection = nullptr;
 

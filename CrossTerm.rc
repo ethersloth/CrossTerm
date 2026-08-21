@@ -1,0 +1,2 @@
+// First icon alphabetically/by ID becomes the Explorer and taskbar icon for the exe.
+IDI_ICON1 ICON "assets/cross_term_logo.ico"
