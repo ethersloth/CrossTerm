@@ -19,7 +19,8 @@ static void logZModemEvent(const QString &message)
 {
     QString logPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/crossterm_zmodem.log";
     QFile logFile(logPath);
-    logFile.open(QIODevice::Append | QIODevice::Text);
+    if (!logFile.open(QIODevice::Append | QIODevice::Text))
+        return;
     QTextStream out(&logFile);
     out << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << " [ZModem] " << message << "\n";
     out.flush();
@@ -144,7 +145,9 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     if (!upload)
         m_zmodemProcess->setWorkingDirectory(QFileInfo(path).absolutePath());
 
-    auto pump = [this](QProcess *source, QProcess *destination) {
+    auto pump = [](QProcess *source, QProcess *destination) {
+        if (!source || !destination)
+            return;
         const QByteArray bytes = source->readAllStandardOutput();
         if (!bytes.isEmpty())
             destination->write(bytes);
@@ -212,8 +215,21 @@ void ZModemProtocol::stopExternalTransfer(bool success, const QString &message)
         m_sshTransferProcess->kill();
     if (m_connection)
         disconnect(m_connection, &IConnection::dataReceived, this, &ZModemProtocol::processIncomingData);
-    m_zmodemProcess.reset();
-    m_sshTransferProcess.reset();
+
+    auto releaseProcess = [this](std::unique_ptr<QProcess> &process) {
+        QProcess *rawProcess = process.release();
+        if (!rawProcess)
+            return;
+
+        rawProcess->disconnect(this);
+        disconnect(rawProcess, nullptr, this, nullptr);
+        if (rawProcess->state() != QProcess::NotRunning)
+            rawProcess->kill();
+        rawProcess->deleteLater();
+    };
+
+    releaseProcess(m_zmodemProcess);
+    releaseProcess(m_sshTransferProcess);
     emit transferCompleted(success, message);
 }
 

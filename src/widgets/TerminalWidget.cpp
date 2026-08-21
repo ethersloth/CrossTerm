@@ -313,7 +313,8 @@ static void logZModemEvent(const QString &message)
 {
     QString logPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/crossterm_zmodem.log";
     QFile logFile(logPath);
-    logFile.open(QIODevice::Append | QIODevice::Text);
+    if (!logFile.open(QIODevice::Append | QIODevice::Text))
+        return;
     QTextStream out(&logFile);
     out << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << " " << message << "\n";
     out.flush();
@@ -503,7 +504,10 @@ void TerminalWidget::handleZModemTransferPrompt(const QString &command, bool upl
         filename = QDir(m_downloadDirectory.trimmed()).filePath(remoteFilename);
         logZModemEvent(QString("Using configured download destination: %1").arg(filename));
     } else {
-        const QString startPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+        QString remoteFilename = QFileInfo(m_remoteZmodemPath).fileName();
+        if (remoteFilename.isEmpty())
+            remoteFilename = QStringLiteral("download");
+        const QString startPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).filePath(remoteFilename);
         filename = QFileDialog::getSaveFileName(this, title, startPath, QStringLiteral("All Files (*)"));
     }
 
