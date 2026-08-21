@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=CrossTerm
+Comment=Cross-platform terminal and SSH connection manager
+Exec=CrossTerm
+Icon=crossterm
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupWMClass=CrossTerm

@@ -138,6 +138,18 @@ install(TARGETS CrossTerm
     RUNTIME DESTINATION bin
     BUNDLE DESTINATION .
 )
+if(UNIX AND NOT APPLE)
+    install(FILES assets/cross_term_logo.png
+        DESTINATION share/icons/hicolor/512x512/apps
+        RENAME crossterm.png
+    )
+    install(FILES packaging/linux/crossterm.desktop
+        DESTINATION share/applications
+    )
+    install(PROGRAMS packaging/linux/install_linux.sh
+        DESTINATION .
+    )
+endif()
 if(WIN32)
     install(TARGETS CrossTermSz CrossTermRz RUNTIME DESTINATION bin)
 endif()
