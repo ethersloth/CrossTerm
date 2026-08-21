@@ -116,6 +116,9 @@ void LocalShellConnection::connectSession()
     }
 
     if (pid == 0) {
+        setenv("TERM", "xterm-256color", 1);
+        setenv("COLORTERM", "truecolor", 0);
+
         const QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
         const QByteArray shell = env.value(QStringLiteral("SHELL"), QStringLiteral("/bin/bash")).toUtf8();
         execl(shell.constData(), shell.constData(), "-i", nullptr);
