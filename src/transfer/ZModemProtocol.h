@@ -129,6 +129,7 @@ private:
     std::unique_ptr<QProcess> m_zmodemProcess;
     bool m_zmodemProcessFinished = false;
     bool m_sshTransferProcessFinished = false;
+    bool m_zmodemProcessStarted = false;
     int m_zmodemExitCode = -1;
     int m_sshTransferExitCode = -1;
     

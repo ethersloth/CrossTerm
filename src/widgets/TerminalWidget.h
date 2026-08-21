@@ -47,9 +47,11 @@ private:
     void recalculateFontMetrics();
     void updateTerminalSize();
     void maybePromptForZModemTransfer(const QByteArray &data);
+    void scheduleZModemDetection();
     void handleZModemTransferPrompt(const QString &command, bool uploadToRemote);
 
     bool m_zmodemPromptActive = false;
+    bool m_zmodemDetectionPending = false;
     QString m_commandInputBuffer;
     QString m_lastSubmittedCommand;
     QString m_pendingZmodemDownloadPath;
@@ -70,4 +72,5 @@ private:
     int m_ascent = 12;
     bool m_cursorBlinkState = true;
     QTimer *m_cursorBlinkTimer = nullptr;
+    QTimer *m_zmodemDetectionTimer = nullptr;
 };

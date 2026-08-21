@@ -6,6 +6,7 @@
 class ConnectionProfile;
 class ProfileManager;
 class QComboBox;
+class QLabel;
 class QLineEdit;
 class QSpinBox;
 class QCheckBox;
@@ -50,6 +51,7 @@ private:
     QComboBox *m_profileCombo = nullptr;
     QStackedWidget *m_optionsStack = nullptr;
     QListWidget *m_categoryList = nullptr;
+    QLabel *m_sshAuthMethodLabel = nullptr;
     QComboBox *m_sshAuthMethod = nullptr;
     QComboBox *m_terminalTypeCombo = nullptr;
     QSpinBox *m_scrollbackSpin = nullptr;

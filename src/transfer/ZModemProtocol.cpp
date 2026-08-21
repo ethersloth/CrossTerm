@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <QTextStream>
 #include <QTimer>
@@ -88,6 +89,7 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     m_fileSize = upload ? QFileInfo(path).size() : 0;
     m_zmodemProcessFinished = false;
     m_sshTransferProcessFinished = false;
+    m_zmodemProcessStarted = false;
     m_zmodemExitCode = -1;
     m_sshTransferExitCode = -1;
 
@@ -96,6 +98,11 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     QStringList sshArgs{QStringLiteral("-T"), QStringLiteral("-p"), QString::number(ssh->port())};
     if (!ssh->privateKey().trimmed().isEmpty())
         sshArgs << QStringLiteral("-i") << ssh->privateKey().trimmed();
+    const bool useSavedPassword = ssh->privateKey().trimmed().isEmpty() && !ssh->password().isEmpty();
+    if (useSavedPassword) {
+        sshArgs << QStringLiteral("-o") << QStringLiteral("PreferredAuthentications=password,keyboard-interactive")
+                << QStringLiteral("-o") << QStringLiteral("PubkeyAuthentication=no");
+    }
     sshArgs << QStringLiteral("%1@%2").arg(ssh->username(), ssh->host());
     QString remoteCommandPrefix;
     if (!remoteWorkingDirectory.isEmpty()) {
@@ -123,6 +130,13 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     m_zmodemProcess = std::make_unique<QProcess>(this);
     m_sshTransferProcess->setProgram(QStringLiteral("ssh"));
     m_sshTransferProcess->setArguments(sshArgs);
+    if (useSavedPassword) {
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.insert(QStringLiteral("SSH_ASKPASS"), QCoreApplication::applicationFilePath());
+        environment.insert(QStringLiteral("SSH_ASKPASS_REQUIRE"), QStringLiteral("force"));
+        environment.insert(QStringLiteral("CROSSTERM_SSH_ASKPASS_PASSWORD"), ssh->password());
+        m_sshTransferProcess->setProcessEnvironment(environment);
+    }
     m_zmodemProcess->setProgram(helper);
     m_zmodemProcess->setArguments(upload
                                   ? QStringList{QStringLiteral("-b"), QStringLiteral("-y"), path}
@@ -148,7 +162,9 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
             emit transferProgress(match.captured(1).toLongLong(), m_fileSize);
     });
     connect(m_sshTransferProcess.get(), &QProcess::readyReadStandardError, this, [this] {
-        logZModemEvent(QStringLiteral("ssh transfer stderr: %1").arg(QString::fromLocal8Bit(m_sshTransferProcess->readAllStandardError())));
+        const QByteArray errorBytes = m_sshTransferProcess->readAllStandardError();
+        const QString message = QString::fromLocal8Bit(errorBytes);
+        logZModemEvent(QStringLiteral("ssh transfer stderr: %1").arg(message));
     });
     connect(m_zmodemProcess.get(), qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
             [this](int code, QProcess::ExitStatus) {
@@ -181,6 +197,7 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     logZModemEvent(QStringLiteral("Starting external lrzsz transfer: %1").arg(path));
     setState(State::Idle);
     m_sshTransferProcess->start();
+    m_zmodemProcessStarted = true;
     m_zmodemProcess->start();
 }
 

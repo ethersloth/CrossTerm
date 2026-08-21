@@ -46,6 +46,13 @@ TerminalWidget::TerminalWidget(QWidget *parent)
     connect(m_cursorBlinkTimer, &QTimer::timeout, this, &TerminalWidget::updateCursorBlink);
     m_cursorBlinkTimer->start(500);  // Blink every 500ms
 
+    m_zmodemDetectionTimer = new QTimer(this);
+    m_zmodemDetectionTimer->setSingleShot(true);
+    connect(m_zmodemDetectionTimer, &QTimer::timeout, this, [this]() {
+        m_zmodemDetectionPending = false;
+        maybePromptForZModemTransfer(QByteArrayLiteral("scheduled"));
+    });
+
     // Calculate font metrics
     recalculateFontMetrics();
     updateTerminalSize();
@@ -186,6 +193,11 @@ void TerminalWidget::keyPressEvent(QKeyEvent *event)
             ? downloadCommandMatch.captured(1).trimmed()
             : QString();
         m_commandInputBuffer.clear();
+        const QRegularExpression zmodemCommandPattern(
+            QStringLiteral("^\\s*(?:rz|sz|rb|sb)\\b"),
+            QRegularExpression::CaseInsensitiveOption);
+        if (zmodemCommandPattern.match(m_lastSubmittedCommand).hasMatch())
+            scheduleZModemDetection();
     } else if (event->key() == Qt::Key_Backspace) {
         if (!m_commandInputBuffer.isEmpty())
             m_commandInputBuffer.chop(1);
@@ -282,10 +294,19 @@ void TerminalWidget::appendIncoming(const QByteArray &data)
     if (promptDirectoryMatch.hasMatch())
         m_remoteWorkingDirectory = QStringLiteral("$HOME") + promptDirectoryMatch.captured(1);
 
-    if (!m_zmodem || !m_zmodem->isTransferInProgress())
-        maybePromptForZModemTransfer(data);
     m_parser->processBytes(data);
+    if (m_zmodemDetectionPending) {
+        m_zmodemDetectionTimer->start(150);
+    } else if (!m_zmodem || !m_zmodem->isTransferInProgress()) {
+        maybePromptForZModemTransfer(data);
+    }
     update();  // Trigger repaint
+}
+
+void TerminalWidget::scheduleZModemDetection()
+{
+    m_zmodemDetectionPending = true;
+    m_zmodemDetectionTimer->start(250);
 }
 
 static void logZModemEvent(const QString &message)
@@ -326,6 +347,17 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
             while (iterator.hasNext())
                 path = iterator.next().captured(1).trimmed();
         }
+        return path;
+    };
+    auto findDownloadPathInIncomingData = [this, &sanitizeCommandLine]() {
+        const QString incomingText = sanitizeCommandLine(QString::fromUtf8(m_promptDetectionBuffer));
+        const QRegularExpression commandPattern(
+            QStringLiteral("\\b(?:sz|sb)\\s+([^\\s]+)"),
+            QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatchIterator matches = commandPattern.globalMatch(incomingText);
+        QString path;
+        while (matches.hasNext())
+            path = matches.next().captured(1).trimmed();
         return path;
     };
 
@@ -387,9 +419,14 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
             QStringLiteral("^\\s*(?:sz|sb)\\s+([^\\s]+)"),
             QRegularExpression::CaseInsensitiveOption);
         const QRegularExpressionMatch remotePathMatch = remotePathPattern.match(submittedLine);
-        m_remoteZmodemPath = !m_pendingZmodemDownloadPath.isEmpty()
-            ? m_pendingZmodemDownloadPath
-            : (remotePathMatch.hasMatch() ? remotePathMatch.captured(1).trimmed() : QString());
+        m_remoteZmodemPath = findDownloadPathOnScreen();
+        if (m_remoteZmodemPath.isEmpty())
+            m_remoteZmodemPath = findDownloadPathInIncomingData();
+        if (m_remoteZmodemPath.isEmpty()) {
+            m_remoteZmodemPath = !m_pendingZmodemDownloadPath.isEmpty()
+                ? m_pendingZmodemDownloadPath
+                : (remotePathMatch.hasMatch() ? remotePathMatch.captured(1).trimmed() : QString());
+        }
         if (m_remoteZmodemPath.isEmpty())
             m_remoteZmodemPath = findDownloadPathOnScreen();
         m_remoteZmodemPath.remove(QLatin1Char('['));

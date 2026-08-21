@@ -3,10 +3,19 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QSize>
+#include <cstdio>
 #include "MainWindow.h"
 
 int main(int argc, char *argv[])
 {
+    const QByteArray askpassPassword = qgetenv("CROSSTERM_SSH_ASKPASS_PASSWORD");
+    if (!askpassPassword.isEmpty()
+        || (argc >= 2 && QString::fromLocal8Bit(argv[1]) == QStringLiteral("--ssh-askpass"))) {
+        std::fputs(askpassPassword.constData(), stdout);
+        std::fputc('\n', stdout);
+        return 0;
+    }
+
     QApplication app(argc, argv);
     QApplication::setApplicationName("CrossTerm");
     QApplication::setOrganizationName("CrossTerm");

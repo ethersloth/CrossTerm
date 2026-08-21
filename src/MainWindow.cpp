@@ -331,6 +331,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
                                        profile.sshPort(),
                                        profile.sshUsername(),
                                        profile.sshPrivateKey(),
+                                       profile.sshPassword(),
                                        terminal);
         break;
 

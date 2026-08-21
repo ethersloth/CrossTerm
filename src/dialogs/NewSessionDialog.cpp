@@ -115,7 +115,6 @@ void NewSessionDialog::buildUi()
     m_categoryList->setFixedWidth(220);
     m_categoryList->setAlternatingRowColors(false);
     m_categoryList->addItem(QStringLiteral("Connection"));
-    m_categoryList->addItem(QStringLiteral("SSH2"));
     m_categoryList->addItem(QStringLiteral("Port Forwarding"));
     m_categoryList->addItem(QStringLiteral("Terminal"));
     m_categoryList->addItem(QStringLiteral("Appearance"));
@@ -181,6 +180,7 @@ void NewSessionDialog::buildUi()
                                                  QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/logs")).toString();
     m_logSessionCheck->setChecked(defaultLogEnabled);
     m_logPathEdit->setText(defaultLogDir);
+    onConnectionTypeChanged(m_connectionTypeCombo->currentIndex());
 }
 
 void NewSessionDialog::buildCategoryPages()
@@ -209,6 +209,13 @@ void NewSessionDialog::buildCategoryPages()
     m_connectionTypeCombo->addItem(QStringLiteral("Serial"));
     m_connectionTypeCombo->addItem(QStringLiteral("Telnet"));
     connectionLayout->addRow(QStringLiteral("Connection Type:"), m_connectionTypeCombo);
+
+    m_sshAuthMethodLabel = new QLabel(QStringLiteral("Preferred auth method:"), this);
+    m_sshAuthMethod = new QComboBox(this);
+    m_sshAuthMethod->addItem(QStringLiteral("Password"));
+    m_sshAuthMethod->addItem(QStringLiteral("Public Key"));
+    m_sshAuthMethod->addItem(QStringLiteral("Agent"));
+    connectionLayout->addRow(m_sshAuthMethodLabel, m_sshAuthMethod);
 
     auto *hostLayout = new QHBoxLayout();
     m_sshHost = new QLineEdit(this);
@@ -291,19 +298,6 @@ void NewSessionDialog::buildCategoryPages()
             m_downloadDirectoryEdit->setText(directory);
     });
     m_optionsStack->addWidget(connectionPage);
-
-    auto *sshPage = new QWidget(this);
-    auto *sshLayout = new QFormLayout(sshPage);
-    sshLayout->setContentsMargins(0, 0, 0, 0);
-    m_sshAuthMethod = new QComboBox(this);
-    m_sshAuthMethod->addItem(QStringLiteral("Password"));
-    m_sshAuthMethod->addItem(QStringLiteral("Public Key"));
-    m_sshAuthMethod->addItem(QStringLiteral("Agent"));
-    sshLayout->addRow(QStringLiteral("Preferred auth method:"), m_sshAuthMethod);
-    auto *sshBanner = new QLabel(QStringLiteral("Use SSH public key authentication, password, or agent-based login."), this);
-    sshBanner->setWordWrap(true);
-    sshLayout->addRow(QStringLiteral(""), sshBanner);
-    m_optionsStack->addWidget(sshPage);
 
     auto *forwardPage = new QWidget(this);
     auto *forwardLayout = new QFormLayout(forwardPage);
@@ -516,7 +510,9 @@ void NewSessionDialog::populateProfileList()
 
 void NewSessionDialog::onConnectionTypeChanged(int index)
 {
-    m_optionsStack->setCurrentIndex(index);
+    const bool isSsh = index == static_cast<int>(ConnectionProfile::ConnectionType::SSH);
+    m_sshAuthMethodLabel->setVisible(isSsh);
+    m_sshAuthMethod->setVisible(isSsh);
 }
 
 void NewSessionDialog::onLoadProfileClicked()

@@ -19,16 +19,19 @@ SshConnection::SshConnection(const QString &host,
                              int port,
                              const QString &username,
                              const QString &privateKey,
+                             const QString &password,
                              QObject *parent)
     : IConnection(parent)
     , m_host(host)
     , m_port(port)
     , m_username(username)
     , m_privateKey(privateKey)
+    , m_password(password)
 {
 #ifdef Q_OS_WIN
     m_pty = new WindowsPty(this);
     connect(m_pty, &WindowsPty::dataReceived, this, &IConnection::dataReceived);
+    connect(m_pty, &WindowsPty::dataReceived, this, &SshConnection::maybeSendSavedPassword);
     connect(m_pty, &WindowsPty::exited, this, &SshConnection::disconnectSession);
 #endif
 }
@@ -78,6 +81,9 @@ void SshConnection::connectSession()
         emit errorOccurred(QStringLiteral("SSH host is required"));
         return;
     }
+
+    m_authPromptBuffer.clear();
+    m_passwordSent = false;
 
     // -t forces remote pty allocation; the pseudo console makes our stdin a real
     // terminal, so ssh can also prompt for passwords and host-key confirmation.
@@ -130,6 +136,9 @@ void SshConnection::connectSession()
         emit errorOccurred(QStringLiteral("SSH host is required"));
         return;
     }
+
+    m_authPromptBuffer.clear();
+    m_passwordSent = false;
 
     int masterFd = -1;
     pid_t pid = forkpty(&masterFd, nullptr, nullptr, nullptr);
@@ -246,10 +255,29 @@ void SshConnection::readProcessOutput()
     char buffer[4096];
     ssize_t n = read(m_masterFd, buffer, sizeof(buffer));
     if (n > 0) {
-        emit dataReceived(QByteArray(buffer, static_cast<int>(n)));
+        const QByteArray data(buffer, static_cast<int>(n));
+        maybeSendSavedPassword(data);
+        emit dataReceived(data);
     } else if (n <= 0 && (errno == EIO || errno == EBADF)) {
         disconnectSession();
     }
 }
 
 #endif // Q_OS_WIN
+
+void SshConnection::maybeSendSavedPassword(const QByteArray &data)
+{
+    if (m_password.isEmpty() || m_passwordSent)
+        return;
+
+    m_authPromptBuffer.append(data);
+    if (m_authPromptBuffer.size() > 1024)
+        m_authPromptBuffer.remove(0, m_authPromptBuffer.size() - 1024);
+
+    if (!m_authPromptBuffer.toLower().contains("password:"))
+        return;
+
+    m_passwordSent = true;
+    writeData(m_password.toUtf8() + '\r');
+    m_authPromptBuffer.clear();
+}

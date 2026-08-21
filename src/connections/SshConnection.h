@@ -14,6 +14,7 @@ public:
                            int port,
                            const QString &username,
                            const QString &privateKey,
+                           const QString &password,
                            QObject *parent = nullptr);
     ~SshConnection() override;
 
@@ -24,6 +25,7 @@ public:
     int port() const { return m_port; }
     QString username() const { return m_username; }
     QString privateKey() const { return m_privateKey; }
+    QString password() const { return m_password; }
 
 public slots:
     void connectSession() override;
@@ -33,11 +35,15 @@ public slots:
 
 private:
     QString buildTarget() const;
+    void maybeSendSavedPassword(const QByteArray &data);
 
     QString m_host;
     int m_port = 22;
     QString m_username;
     QString m_privateKey;
+    QString m_password;
+    QByteArray m_authPromptBuffer;
+    bool m_passwordSent = false;
 
 #ifdef Q_OS_WIN
     WindowsPty *m_pty = nullptr;
