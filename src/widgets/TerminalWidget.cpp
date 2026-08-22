@@ -7,6 +7,7 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QContextMenuEvent>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -15,13 +16,16 @@
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QStandardPaths>
 #include <QPainter>
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QTextStream>
 #include <QTimer>
+#include <QWheelEvent>
 
 TerminalWidget::TerminalWidget(QWidget *parent)
     : QWidget(parent)
@@ -103,7 +107,7 @@ void TerminalWidget::paintEvent(QPaintEvent *event)
 
         for (int col = 0; col < m_screen->columns(); ++col) {
             int x = col * m_charWidth;
-            const auto &cell = m_screen->cellAt(row, col);
+            const auto &cell = displayCellAt(row, col);
 
             // Determine colors
             QColor fgColor = Qt::white;
@@ -131,12 +135,19 @@ void TerminalWidget::paintEvent(QPaintEvent *event)
                 std::swap(fgColor, bgColor);
             }
 
+            const int logicalRow = m_screen->scrollbackSize() + row - m_scrollOffset;
+            const bool selected = isCellSelected(logicalRow, col);
+            if (selected) {
+                fgColor = Qt::white;
+                bgColor = QColor(38, 90, 150);
+            }
+
             // Draw background
-            if (bgColor != Qt::black)
+            if (bgColor != Qt::black || selected)
                 painter.fillRect(x, row * m_charHeight, m_charWidth, m_charHeight, bgColor);
 
             // Draw cursor
-            if (row == cursor.row && col == cursor.column && m_cursorBlinkState) {
+            if (m_scrollOffset == 0 && row == cursor.row && col == cursor.column && m_cursorBlinkState) {
                 painter.fillRect(x, row * m_charHeight, m_charWidth, m_charHeight, 
                                 bgColor == Qt::black ? Qt::white : Qt::black);
             }
@@ -163,6 +174,21 @@ void TerminalWidget::resizeEvent(QResizeEvent *event)
 
 void TerminalWidget::keyPressEvent(QKeyEvent *event)
 {
+    const bool control = event->modifiers().testFlag(Qt::ControlModifier);
+    const bool shift = event->modifiers().testFlag(Qt::ShiftModifier);
+    if ((control && shift && event->key() == Qt::Key_C)
+        || (control && event->key() == Qt::Key_Insert)) {
+        copySelection();
+        event->accept();
+        return;
+    }
+    if ((control && shift && event->key() == Qt::Key_V)
+        || (shift && event->key() == Qt::Key_Insert)) {
+        pasteClipboard();
+        event->accept();
+        return;
+    }
+
     if (!m_connection || !m_connection->isConnected()) {
         const bool isCtrlC = event->modifiers().testFlag(Qt::ControlModifier) && event->key() == Qt::Key_C;
         const bool isEnter = event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter;
@@ -276,6 +302,78 @@ bool TerminalWidget::focusNextPrevChild(bool)
     return false;
 }
 
+void TerminalWidget::mousePressEvent(QMouseEvent *event)
+{
+    setFocus();
+    if (event->button() == Qt::LeftButton) {
+        m_selectionStart = terminalPositionAt(event->position().toPoint());
+        m_selectionEnd = m_selectionStart;
+        m_selecting = true;
+        update();
+        event->accept();
+        return;
+    }
+    QWidget::mousePressEvent(event);
+}
+
+void TerminalWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_selecting) {
+        m_selectionEnd = terminalPositionAt(event->position().toPoint());
+        update();
+        event->accept();
+        return;
+    }
+    QWidget::mouseMoveEvent(event);
+}
+
+void TerminalWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && m_selecting) {
+        m_selectionEnd = terminalPositionAt(event->position().toPoint());
+        m_selecting = false;
+        copySelection();
+        update();
+        event->accept();
+        return;
+    }
+    QWidget::mouseReleaseEvent(event);
+}
+
+void TerminalWidget::wheelEvent(QWheelEvent *event)
+{
+    if (!m_screen || m_screen->isAltScreenEnabled()) {
+        QWidget::wheelEvent(event);
+        return;
+    }
+
+    const int steps = event->angleDelta().y() / 120;
+    if (steps == 0) {
+        event->ignore();
+        return;
+    }
+
+    m_scrollOffset = std::clamp(m_scrollOffset + steps * 3, 0, m_screen->scrollbackSize());
+    update();
+    event->accept();
+}
+
+void TerminalWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu menu(this);
+    QAction *copyAction = menu.addAction(QStringLiteral("Copy"));
+    copyAction->setEnabled(hasSelection());
+    QAction *pasteAction = menu.addAction(QStringLiteral("Paste"));
+    pasteAction->setEnabled(m_connection && m_connection->isConnected()
+                            && !QApplication::clipboard()->text().isEmpty());
+
+    QAction *chosen = menu.exec(event->globalPos());
+    if (chosen == copyAction)
+        copySelection();
+    else if (chosen == pasteAction)
+        pasteClipboard();
+}
+
 void TerminalWidget::appendIncoming(const QByteArray &data)
 {
     if (!m_parser)
@@ -308,7 +406,14 @@ void TerminalWidget::appendIncoming(const QByteArray &data)
         return;
     }
 
+    const int previousScrollbackSize = m_screen->scrollbackSize();
     m_parser->processBytes(data);
+    if (m_scrollOffset > 0) {
+        const int addedLines = m_screen->scrollbackSize() - previousScrollbackSize;
+        m_scrollOffset = std::clamp(m_scrollOffset + std::max(0, addedLines),
+                                    0,
+                                    m_screen->scrollbackSize());
+    }
     if (m_zmodemDetectionPending) {
         m_zmodemDetectionTimer->start(150);
     } else if (!m_zmodem || !m_zmodem->isTransferInProgress()) {
@@ -591,6 +696,121 @@ void TerminalWidget::applySessionFont(const QFont &font)
     setFont(font);
     recalculateFontMetrics();
     update();
+}
+
+void TerminalWidget::setScrollbackLimit(int lines)
+{
+    if (!m_screen)
+        return;
+    m_screen->setScrollbackLimit(lines);
+    m_scrollOffset = std::min(m_scrollOffset, m_screen->scrollbackSize());
+    update();
+}
+
+const TerminalCell &TerminalWidget::displayCellAt(int row, int column) const
+{
+    static const TerminalCell empty;
+    if (!m_screen)
+        return empty;
+
+    const int logicalRow = m_screen->scrollbackSize() + row - m_scrollOffset;
+    if (logicalRow < 0)
+        return empty;
+    if (logicalRow < m_screen->scrollbackSize()) {
+        const auto &line = m_screen->scrollbackLine(logicalRow);
+        return column >= 0 && column < line.size() ? line[column] : empty;
+    }
+    return m_screen->cellAt(logicalRow - m_screen->scrollbackSize(), column);
+}
+
+QPoint TerminalWidget::terminalPositionAt(const QPoint &pixelPosition) const
+{
+    if (!m_screen)
+        return {-1, -1};
+    const int column = std::clamp(pixelPosition.x() / std::max(1, m_charWidth),
+                                  0,
+                                  m_screen->columns() - 1);
+    const int displayRow = std::clamp(pixelPosition.y() / std::max(1, m_charHeight),
+                                      0,
+                                      m_screen->rows() - 1);
+    const int logicalRow = std::max(0, m_screen->scrollbackSize() + displayRow - m_scrollOffset);
+    return {column, logicalRow};
+}
+
+bool TerminalWidget::hasSelection() const
+{
+    return m_selectionStart.x() >= 0 && m_selectionStart.y() >= 0
+        && m_selectionEnd.x() >= 0 && m_selectionEnd.y() >= 0
+        && m_selectionStart != m_selectionEnd;
+}
+
+bool TerminalWidget::isCellSelected(int logicalRow, int column) const
+{
+    if (!hasSelection())
+        return false;
+    QPoint start = m_selectionStart;
+    QPoint end = m_selectionEnd;
+    if (start.y() > end.y() || (start.y() == end.y() && start.x() > end.x()))
+        std::swap(start, end);
+    if (logicalRow < start.y() || logicalRow > end.y())
+        return false;
+    if (start.y() == end.y())
+        return column >= start.x() && column <= end.x();
+    if (logicalRow == start.y())
+        return column >= start.x();
+    if (logicalRow == end.y())
+        return column <= end.x();
+    return true;
+}
+
+QString TerminalWidget::selectedText() const
+{
+    if (!hasSelection() || !m_screen)
+        return {};
+
+    QPoint start = m_selectionStart;
+    QPoint end = m_selectionEnd;
+    if (start.y() > end.y() || (start.y() == end.y() && start.x() > end.x()))
+        std::swap(start, end);
+
+    QStringList lines;
+    const int scrollbackSize = m_screen->scrollbackSize();
+    for (int logicalRow = start.y(); logicalRow <= end.y(); ++logicalRow) {
+        const int firstColumn = logicalRow == start.y() ? start.x() : 0;
+        const int lastColumn = logicalRow == end.y() ? end.x() : m_screen->columns() - 1;
+        QString line;
+        for (int column = firstColumn; column <= lastColumn; ++column) {
+            if (logicalRow < scrollbackSize) {
+                const auto &historyLine = m_screen->scrollbackLine(logicalRow);
+                line.append(column < historyLine.size() ? historyLine[column].character : QChar(' '));
+            } else {
+                line.append(m_screen->cellAt(logicalRow - scrollbackSize, column).character);
+            }
+        }
+        while (line.endsWith(QLatin1Char(' ')))
+            line.chop(1);
+        lines.append(line);
+    }
+    return lines.join(QLatin1Char('\n'));
+}
+
+void TerminalWidget::copySelection()
+{
+    const QString text = selectedText();
+    if (text.isEmpty())
+        return;
+    QApplication::clipboard()->setText(text, QClipboard::Clipboard);
+    if (QApplication::clipboard()->supportsSelection())
+        QApplication::clipboard()->setText(text, QClipboard::Selection);
+}
+
+void TerminalWidget::pasteClipboard()
+{
+    if (!m_connection || !m_connection->isConnected())
+        return;
+    const QString text = QApplication::clipboard()->text(QClipboard::Clipboard);
+    if (!text.isEmpty())
+        sendBytes(text.toUtf8());
 }
 
 void TerminalWidget::recalculateFontMetrics()

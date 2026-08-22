@@ -26,6 +26,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
+#include <QSpinBox>
 #include <QStatusBar>
 #include <QStandardPaths>
 #include <QTabWidget>
@@ -285,6 +286,12 @@ void MainWindow::onGlobalOptions()
     enableLoggingByDefault->setChecked(settings.value(QStringLiteral("global/loggingEnabledByDefault"), false).toBool());
     form->addRow(enableLoggingByDefault);
 
+    auto *scrollbackLines = new QSpinBox(&dialog);
+    scrollbackLines->setRange(100, 100000);
+    scrollbackLines->setSingleStep(1000);
+    scrollbackLines->setValue(settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt());
+    form->addRow(QStringLiteral("Default scrollback lines:"), scrollbackLines);
+
     auto *logPathRow = new QWidget(&dialog);
     auto *logPathLayout = new QHBoxLayout(logPathRow);
     logPathLayout->setContentsMargins(0, 0, 0, 0);
@@ -320,6 +327,7 @@ void MainWindow::onGlobalOptions()
 
     settings.setValue(QStringLiteral("global/loggingEnabledByDefault"), enableLoggingByDefault->isChecked());
     settings.setValue(QStringLiteral("global/logDirectory"), logDirectory->text().trimmed());
+    settings.setValue(QStringLiteral("global/scrollbackLines"), scrollbackLines->value());
     statusBar()->showMessage(QStringLiteral("Global options saved"), 2500);
 }
 
@@ -342,6 +350,10 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
     const QFont sessionFont(profile.fontFamily(), profile.fontSize());
     terminal->applySessionFont(sessionFont);
     terminal->setDownloadDirectory(profile.downloadDirectory());
+    QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+    const int defaultScrollbackLines = settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt();
+    terminal->setScrollbackLimit(profile.property(QStringLiteral("scrollback_lines"),
+                                                  QString::number(defaultScrollbackLines)).toInt());
 
     // Create connection based on profile type
     IConnection *connection = nullptr;
@@ -412,7 +424,6 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
     });
 
     // Session logging: per-profile option, falls back to global defaults.
-    QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
     bool logEnabled = settings.value(QStringLiteral("global/loggingEnabledByDefault"), false).toBool();
     const QString rawEnabled = profile.property(QStringLiteral("session_log_enabled"));
     if (!rawEnabled.isEmpty()) {

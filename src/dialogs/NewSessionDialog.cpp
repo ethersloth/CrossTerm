@@ -180,6 +180,7 @@ void NewSessionDialog::buildUi()
                                                  QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/logs")).toString();
     m_logSessionCheck->setChecked(defaultLogEnabled);
     m_logPathEdit->setText(defaultLogDir);
+    m_scrollbackSpin->setValue(settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt());
     onConnectionTypeChanged(m_connectionTypeCombo->currentIndex());
 }
 
