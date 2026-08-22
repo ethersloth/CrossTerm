@@ -202,6 +202,8 @@ void MainWindow::onSessionContextMenu(const QPoint &pos)
     QMenu menu(this);
     QAction *openAction = menu.addAction(QStringLiteral("Open Session"));
     QAction *propertiesAction = menu.addAction(QStringLiteral("Properties..."));
+    menu.addSeparator();
+    QAction *deleteAction = menu.addAction(QStringLiteral("Delete Session..."));
 
     QAction *chosen = menu.exec(m_sessionTree->viewport()->mapToGlobal(pos));
     if (!chosen)
@@ -241,6 +243,29 @@ void MainWindow::onSessionContextMenu(const QPoint &pos)
         }
 
         populateSessions();
+        return;
+    }
+
+    if (chosen == deleteAction) {
+        const QMessageBox::StandardButton confirmation = QMessageBox::question(
+            this,
+            QStringLiteral("Delete Session"),
+            QStringLiteral("Delete the saved session '%1'?\n\nThis cannot be undone.").arg(profileName),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (confirmation != QMessageBox::Yes)
+            return;
+
+        m_profileManager->removeProfile(profileName);
+        if (!m_profileManager->saveProfiles()) {
+            QMessageBox::critical(this,
+                                  QStringLiteral("Delete Session"),
+                                  QStringLiteral("Failed to save the updated session list."));
+            return;
+        }
+
+        populateSessions();
+        statusBar()->showMessage(QStringLiteral("Deleted session: %1").arg(profileName), 2500);
     }
 }
 
