@@ -14,6 +14,8 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFontComboBox>
+#include <QFontDatabase>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QKeySequence>
@@ -52,6 +54,22 @@ MainWindow::MainWindow(QWidget *parent)
     populateSessions();
 
     statusBar()->showMessage(QStringLiteral("Ready"));
+}
+
+MainWindow::~MainWindow()
+{
+    if (!m_tabs)
+        return;
+
+    for (int index = 0; index < m_tabs->count(); ++index) {
+        auto *terminal = qobject_cast<TerminalWidget *>(m_tabs->widget(index));
+        if (!terminal || !terminal->connection())
+            continue;
+
+        IConnection *connection = terminal->connection();
+        connection->blockSignals(true);
+        connection->disconnectSession();
+    }
 }
 
 void MainWindow::buildUi()
@@ -292,6 +310,37 @@ void MainWindow::onGlobalOptions()
     scrollbackLines->setValue(settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt());
     form->addRow(QStringLiteral("Default scrollback lines:"), scrollbackLines);
 
+    auto *fontFamily = new QFontComboBox(&dialog);
+    const QString defaultFontFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    fontFamily->setCurrentFont(QFont(settings.value(QStringLiteral("global/fontFamily"), defaultFontFamily).toString()));
+    form->addRow(QStringLiteral("Default terminal font:"), fontFamily);
+
+    auto *fontSize = new QSpinBox(&dialog);
+    fontSize->setRange(6, 36);
+    fontSize->setValue(settings.value(QStringLiteral("global/fontSize"), 12).toInt());
+    form->addRow(QStringLiteral("Default font size:"), fontSize);
+
+    auto *downloadPathRow = new QWidget(&dialog);
+    auto *downloadPathLayout = new QHBoxLayout(downloadPathRow);
+    downloadPathLayout->setContentsMargins(0, 0, 0, 0);
+    downloadPathLayout->setSpacing(6);
+    auto *downloadDirectory = new QLineEdit(&dialog);
+    downloadDirectory->setText(settings.value(QStringLiteral("global/downloadDirectory"),
+                                              QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString());
+    auto *downloadBrowse = new QPushButton(QStringLiteral("Browse..."), &dialog);
+    downloadPathLayout->addWidget(downloadDirectory, 1);
+    downloadPathLayout->addWidget(downloadBrowse);
+    form->addRow(QStringLiteral("Default ZModem download folder:"), downloadPathRow);
+
+    connect(downloadBrowse, &QPushButton::clicked, &dialog, [&dialog, downloadDirectory]() {
+        const QString selected = QFileDialog::getExistingDirectory(
+            &dialog,
+            QStringLiteral("Select Default Download Folder"),
+            downloadDirectory->text().trimmed());
+        if (!selected.isEmpty())
+            downloadDirectory->setText(selected);
+    });
+
     auto *logPathRow = new QWidget(&dialog);
     auto *logPathLayout = new QHBoxLayout(logPathRow);
     logPathLayout->setContentsMargins(0, 0, 0, 0);
@@ -328,6 +377,9 @@ void MainWindow::onGlobalOptions()
     settings.setValue(QStringLiteral("global/loggingEnabledByDefault"), enableLoggingByDefault->isChecked());
     settings.setValue(QStringLiteral("global/logDirectory"), logDirectory->text().trimmed());
     settings.setValue(QStringLiteral("global/scrollbackLines"), scrollbackLines->value());
+    settings.setValue(QStringLiteral("global/fontFamily"), fontFamily->currentFont().family());
+    settings.setValue(QStringLiteral("global/fontSize"), fontSize->value());
+    settings.setValue(QStringLiteral("global/downloadDirectory"), downloadDirectory->text().trimmed());
     statusBar()->showMessage(QStringLiteral("Global options saved"), 2500);
 }
 
@@ -347,10 +399,20 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         return;
 
     auto *terminal = new TerminalWidget(m_tabs);
-    const QFont sessionFont(profile.fontFamily(), profile.fontSize());
-    terminal->applySessionFont(sessionFont);
-    terminal->setDownloadDirectory(profile.downloadDirectory());
     QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+    const QString defaultFontFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    const QString sessionFontFamily = profile.hasProperty(QStringLiteral("font_family"))
+        ? profile.fontFamily()
+        : settings.value(QStringLiteral("global/fontFamily"), defaultFontFamily).toString();
+    const int sessionFontSize = profile.hasProperty(QStringLiteral("font_size"))
+        ? profile.fontSize()
+        : settings.value(QStringLiteral("global/fontSize"), 12).toInt();
+    const QFont sessionFont(sessionFontFamily, sessionFontSize);
+    terminal->applySessionFont(sessionFont);
+    terminal->setDownloadDirectory(profile.hasProperty(QStringLiteral("download_directory"))
+                                       ? profile.downloadDirectory()
+                                       : settings.value(QStringLiteral("global/downloadDirectory"),
+                                                        QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString());
     const int defaultScrollbackLines = settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt();
     terminal->setScrollbackLimit(profile.property(QStringLiteral("scrollback_lines"),
                                                   QString::number(defaultScrollbackLines)).toInt());

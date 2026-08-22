@@ -38,7 +38,9 @@ SshConnection::SshConnection(const QString &host,
 
 SshConnection::~SshConnection()
 {
+    blockSignals(true);
 #ifdef Q_OS_WIN
+    disconnect(m_pty, nullptr, this, nullptr);
     m_pty->stop();
 #else
     disconnectSession();
