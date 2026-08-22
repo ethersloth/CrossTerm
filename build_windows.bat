@@ -5,6 +5,7 @@ set "PROJECT_DIR=%~dp0"
 if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
 set "BUILD_DIR=%PROJECT_DIR%\build-windows"
 set "PACKAGE_DIR=%PROJECT_DIR%\dist\windows"
+set "PACKAGE_ARCHIVE=%PROJECT_DIR%\dist\CrossTerm-0.5.0-windows-x64.zip"
 set "RC_EXE="
 set "MT_EXE="
 set "CMAKE_TOOL_FLAGS="
@@ -69,10 +70,38 @@ if errorlevel 1 exit /b 1
 windeployqt --release --compiler-runtime "%PACKAGE_DIR%\bin\CrossTerm.exe"
 if errorlevel 1 exit /b 1
 
+call :deploy_msvc_runtime
+if errorlevel 1 exit /b 1
+
+if exist "%PACKAGE_ARCHIVE%" del /q "%PACKAGE_ARCHIVE%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path '%PACKAGE_DIR%\*' -DestinationPath '%PACKAGE_ARCHIVE%' -CompressionLevel Optimal"
+if errorlevel 1 exit /b 1
+
 echo.
 echo Release package complete: %PACKAGE_DIR%\bin\CrossTerm.exe
+echo Release archive complete: %PACKAGE_ARCHIVE%
 echo Note: Use the packaged exe above, not %BUILD_DIR%\CrossTerm.exe.
 endlocal
+exit /b 0
+
+:deploy_msvc_runtime
+if not defined VCToolsRedistDir (
+    echo Error: Visual C++ redistributable path was not configured.
+    exit /b 1
+)
+set "CRT_DIR="
+for /d %%D in ("%VCToolsRedistDir%x64\Microsoft.VC*.CRT") do (
+    if exist "%%~fD\vcruntime140.dll" set "CRT_DIR=%%~fD"
+)
+if not defined CRT_DIR (
+    echo Error: Visual C++ runtime DLLs were not found under %VCToolsRedistDir%x64.
+    exit /b 1
+)
+xcopy /y /q "%CRT_DIR%\*.dll" "%PACKAGE_DIR%\bin\" >nul
+if errorlevel 1 (
+    echo Error: Failed to copy Visual C++ runtime DLLs.
+    exit /b 1
+)
 exit /b 0
 
 :setup_msvc

@@ -43,7 +43,7 @@ constexpr int RoleProfileName = Qt::UserRole + 1;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_profileManager(new ProfileManager())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.4.0"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.5.0"));
     resize(1200, 760);
 
     // Load saved profiles
