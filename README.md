@@ -1,4 +1,4 @@
-# CrossTerm 0.5.2
+# CrossTerm 0.5.3
 
 CrossTerm is a Qt 6 desktop terminal and connection manager for Windows and Linux, built with C++20 and CMake. It provides saved connection profiles, tabbed sessions, local shells, SSH sessions, session logging, and ZModem file transfers over SSH.
 
@@ -71,7 +71,7 @@ dist\windows\bin\CrossTerm.exe
 
 Use the executable in `dist\windows\bin`, not the intermediate binary in `build-windows`.
 
-The build also creates `dist\CrossTerm-0.5.2-windows-x64.zip`. Distribute that ZIP rather than `CrossTerm.exe` alone: it includes the Qt libraries and plugins, app-local Visual C++ runtime DLLs, ZModem helpers, and the project license. Users can extract the ZIP and run `CrossTerm.exe` without installing Qt or Visual Studio runtime dependencies.
+The build also creates `dist\CrossTerm-0.5.3-windows-x64.zip`. Distribute that ZIP rather than `CrossTerm.exe` alone: it includes the Qt libraries and plugins, app-local Visual C++ runtime DLLs, ZModem helpers, and the project license. Users can extract the ZIP and run `CrossTerm.exe` without installing Qt or Visual Studio runtime dependencies.
 
 ### Windows installer
 
@@ -81,7 +81,7 @@ For a conventional Windows installation, install [Inno Setup 6](https://jrsoftwa
 build_installer.bat
 ```
 
-This creates `dist\installer\CrossTerm-0.5.2-windows-x64-setup.exe`. The installer places the complete deployed package in `C:\Program Files\CrossTerm`, creates a Start Menu shortcut, and offers a desktop shortcut. End users do not need Qt or Visual Studio installed.
+This creates `dist\installer\CrossTerm-0.5.3-windows-x64-setup.exe`. The installer places the complete deployed package in `C:\Program Files\CrossTerm`, creates a Start Menu shortcut, and offers a desktop shortcut. End users do not need Qt or Visual Studio installed.
 
 ### Linux
 

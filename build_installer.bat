@@ -27,5 +27,5 @@ if not defined ISCC_EXE (
 if errorlevel 1 exit /b 1
 
 echo.
-echo Installer complete: %PROJECT_DIR%\dist\installer\CrossTerm-0.5.2-windows-x64-setup.exe
+echo Installer complete: %PROJECT_DIR%\dist\installer\CrossTerm-0.5.3-windows-x64-setup.exe
 endlocal

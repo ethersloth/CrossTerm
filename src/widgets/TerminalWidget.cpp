@@ -396,14 +396,21 @@ void TerminalWidget::appendIncoming(const QByteArray &data)
         return directory;
     };
     QString detectedDirectory;
+    qsizetype detectedDirectoryPosition = -1;
     const QList<QRegularExpression> promptDirectoryPatterns{
         QRegularExpression(QStringLiteral("\\)-\\[([^\\]\\r\\n]+)\\]")),
         QRegularExpression(QStringLiteral("\\[(~(?:/[^\\]\\r\\n]*)?)\\]"))
     };
     for (const QRegularExpression &pattern : promptDirectoryPatterns) {
         QRegularExpressionMatchIterator matches = pattern.globalMatch(incomingText);
-        while (matches.hasNext())
-            detectedDirectory = matches.next().captured(1);
+        while (matches.hasNext()) {
+            const QRegularExpressionMatch match = matches.next();
+            const qsizetype position = match.capturedStart(1);
+            if (position > detectedDirectoryPosition) {
+                detectedDirectory = match.captured(1);
+                detectedDirectoryPosition = position;
+            }
+        }
     }
     if (!detectedDirectory.isEmpty())
         m_remoteWorkingDirectory = normalizeRemoteDirectory(detectedDirectory);
