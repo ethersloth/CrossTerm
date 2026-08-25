@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 set "PROJECT_DIR=%~dp0"
 if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
-set "APP_VERSION=0.5.1"
+set "APP_VERSION=0.5.2"
 set "BUILD_DIR=%PROJECT_DIR%\build-windows"
 set "PACKAGE_DIR=%PROJECT_DIR%\dist\windows"
 set "PACKAGE_ARCHIVE=%PROJECT_DIR%\dist\CrossTerm-%APP_VERSION%-windows-x64.zip"

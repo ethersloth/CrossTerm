@@ -386,11 +386,27 @@ void TerminalWidget::appendIncoming(const QByteArray &data)
     QString incomingText = QString::fromUtf8(m_promptDetectionBuffer);
     const QRegularExpression ansiPattern(QStringLiteral("\\x1b\\[[0-9;?]*[ -/]*[@-~]"));
     incomingText.remove(ansiPattern);
-    const QRegularExpression promptDirectoryPattern(
-        QStringLiteral("\\[~(/[^\\]\\r\\n]*)\\]"));
-    const QRegularExpressionMatch promptDirectoryMatch = promptDirectoryPattern.match(incomingText);
-    if (promptDirectoryMatch.hasMatch())
-        m_remoteWorkingDirectory = QStringLiteral("$HOME") + promptDirectoryMatch.captured(1);
+
+    auto normalizeRemoteDirectory = [](QString directory) {
+        directory = directory.trimmed();
+        if (directory == QStringLiteral("~"))
+            return QStringLiteral("$HOME");
+        if (directory.startsWith(QStringLiteral("~/")))
+            return QStringLiteral("$HOME") + directory.mid(1);
+        return directory;
+    };
+    QString detectedDirectory;
+    const QList<QRegularExpression> promptDirectoryPatterns{
+        QRegularExpression(QStringLiteral("\\)-\\[([^\\]\\r\\n]+)\\]")),
+        QRegularExpression(QStringLiteral("\\[(~(?:/[^\\]\\r\\n]*)?)\\]"))
+    };
+    for (const QRegularExpression &pattern : promptDirectoryPatterns) {
+        QRegularExpressionMatchIterator matches = pattern.globalMatch(incomingText);
+        while (matches.hasNext())
+            detectedDirectory = matches.next().captured(1);
+    }
+    if (!detectedDirectory.isEmpty())
+        m_remoteWorkingDirectory = normalizeRemoteDirectory(detectedDirectory);
 
     const bool transferInProgress = m_zmodem && m_zmodem->isTransferInProgress();
     const bool hasZmodemHeader = data.contains(QByteArray::fromHex("2A2A1842"))

@@ -8,7 +8,7 @@ assignees: ""
 
 ## CrossTerm version
 
-<!-- Example: 0.5.1 -->
+<!-- Example: 0.5.2 -->
 
 ## Environment
 
