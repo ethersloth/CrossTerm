@@ -116,12 +116,15 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
     if (upload)
         sshArgs << remoteCommandPrefix + QStringLiteral("rz -b -y");
     else {
-        QString sourcePath = QFileInfo(path).fileName();
-        if (QDir::isRelativePath(sourcePath))
-            sourcePath = QStringLiteral("$PWD/") + sourcePath;
-        const QString sourceArgument = sourcePath.startsWith(QLatin1Char('$'))
-            ? QStringLiteral("\"%1\"").arg(sourcePath)
-            : shellQuote(sourcePath);
+        QString sourceArgument = remotePath.trimmed();
+        if (sourceArgument.isEmpty()) {
+            QString sourcePath = QFileInfo(path).fileName();
+            if (QDir::isRelativePath(sourcePath))
+                sourcePath = QStringLiteral("$PWD/") + sourcePath;
+            sourceArgument = sourcePath.startsWith(QLatin1Char('$'))
+                ? QStringLiteral("\"%1\"").arg(sourcePath)
+                : shellQuote(sourcePath);
+        }
         sshArgs << remoteCommandPrefix + QStringLiteral("sz -b -y -- %1").arg(sourceArgument);
     }
 

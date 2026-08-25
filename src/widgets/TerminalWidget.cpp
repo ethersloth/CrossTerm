@@ -211,7 +211,7 @@ void TerminalWidget::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         m_lastSubmittedCommand = m_commandInputBuffer;
         const QRegularExpression downloadCommandPattern(
-            QStringLiteral("^\\s*(?:sz|sb)\\s+([^\\s]+)"),
+            QStringLiteral("^\\s*(?:sz|sb)\\s+(.+)"),
             QRegularExpression::CaseInsensitiveOption);
         const QRegularExpressionMatch downloadCommandMatch =
             downloadCommandPattern.match(m_lastSubmittedCommand);
@@ -454,7 +454,7 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
             return QString();
 
         const QRegularExpression commandPattern(
-            QStringLiteral("(?:^|\\s)(?:sz|sb)\\s+([^\\s]+)"),
+            QStringLiteral("(?:^|\\s)(?:sz|sb)\\s+(.+)"),
             QRegularExpression::CaseInsensitiveOption);
         QString path;
         for (int row = 0; row < m_screen->rows(); ++row) {
@@ -472,7 +472,7 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
     auto findDownloadPathInIncomingData = [this, &sanitizeCommandLine]() {
         const QString incomingText = sanitizeCommandLine(QString::fromUtf8(m_promptDetectionBuffer));
         const QRegularExpression commandPattern(
-            QStringLiteral("\\b(?:sz|sb)\\s+([^\\s]+)"),
+            QStringLiteral("\\b(?:sz|sb)\\s+(.+)"),
             QRegularExpression::CaseInsensitiveOption);
         QRegularExpressionMatchIterator matches = commandPattern.globalMatch(incomingText);
         QString path;
@@ -541,7 +541,7 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
 
     if (!uploadToRemote) {
         const QRegularExpression remotePathPattern(
-            QStringLiteral("^\\s*(?:sz|sb)\\s+([^\\s]+)"),
+            QStringLiteral("^\\s*(?:sz|sb)\\s+(.+)"),
             QRegularExpression::CaseInsensitiveOption);
         const QRegularExpressionMatch remotePathMatch = remotePathPattern.match(submittedLine);
         m_remoteZmodemPath = findDownloadPathOnScreen();
@@ -554,12 +554,6 @@ void TerminalWidget::maybePromptForZModemTransfer(const QByteArray &data)
         }
         if (m_remoteZmodemPath.isEmpty())
             m_remoteZmodemPath = findDownloadPathOnScreen();
-        m_remoteZmodemPath.remove(QLatin1Char('['));
-        m_remoteZmodemPath.remove(QLatin1Char(']'));
-        m_remoteZmodemPath.remove(QLatin1Char('\''));
-        m_remoteZmodemPath.remove(QLatin1Char('"'));
-        if (m_remoteZmodemPath.contains(QLatin1Char(':')) || m_remoteZmodemPath.contains(QLatin1Char('\\')))
-            m_remoteZmodemPath = QFileInfo(m_remoteZmodemPath).fileName();
         logZModemEvent(QString("Captured remote ZModem path: %1").arg(m_remoteZmodemPath));
     } else {
         m_remoteZmodemPath.clear();
@@ -619,19 +613,27 @@ void TerminalWidget::handleZModemTransferPrompt(const QString &command, bool upl
                                         : QStringLiteral("Choose download destination");
     QString filename;
 
+    auto suggestedRemoteFilename = [](const QString &remotePath) {
+        const bool looksLikeMultipleFiles = remotePath.contains(QLatin1Char('{'))
+            || remotePath.contains(QLatin1Char('*'))
+            || remotePath.contains(QLatin1Char('?'))
+            || remotePath.contains(QLatin1Char(' '));
+        if (looksLikeMultipleFiles)
+            return QStringLiteral("download");
+
+        QString remoteFilename = QFileInfo(remotePath).fileName();
+        if (remoteFilename.isEmpty())
+            remoteFilename = QStringLiteral("download");
+        return remoteFilename;
+    };
+
     if (uploadToRemote) {
         filename = QFileDialog::getOpenFileName(this, title, QDir::homePath(), QStringLiteral("All Files (*)"));
     } else if (!m_downloadDirectory.trimmed().isEmpty()) {
-        QString remoteFilename = QFileInfo(m_remoteZmodemPath).fileName();
-        if (remoteFilename.isEmpty())
-            remoteFilename = QStringLiteral("download");
-        filename = QDir(m_downloadDirectory.trimmed()).filePath(remoteFilename);
+        filename = QDir(m_downloadDirectory.trimmed()).filePath(suggestedRemoteFilename(m_remoteZmodemPath));
         logZModemEvent(QString("Using configured download destination: %1").arg(filename));
     } else {
-        QString remoteFilename = QFileInfo(m_remoteZmodemPath).fileName();
-        if (remoteFilename.isEmpty())
-            remoteFilename = QStringLiteral("download");
-        const QString startPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).filePath(remoteFilename);
+        const QString startPath = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).filePath(suggestedRemoteFilename(m_remoteZmodemPath));
         filename = QFileDialog::getSaveFileName(this, title, startPath, QStringLiteral("All Files (*)"));
     }
 
