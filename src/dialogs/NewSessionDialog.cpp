@@ -132,6 +132,10 @@ void NewSessionDialog::buildUi()
     rightLayout->addWidget(m_optionsStack, 1);
 
     auto *buttonLayout = new QHBoxLayout();
+    m_loadProfileBtn = new QPushButton(QStringLiteral("Load Profile"), this);
+    m_saveProfileBtn = new QPushButton(QStringLiteral("Save Profile"), this);
+    buttonLayout->addWidget(m_loadProfileBtn);
+    buttonLayout->addWidget(m_saveProfileBtn);
     buttonLayout->addStretch();
 
     auto *cancelBtn = new QPushButton(QStringLiteral("Cancel"), this);
@@ -180,6 +184,13 @@ void NewSessionDialog::buildUi()
                                                  QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/logs")).toString();
     m_logSessionCheck->setChecked(defaultLogEnabled);
     m_logPathEdit->setText(defaultLogDir);
+    m_scrollbackSpin->setValue(settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt());
+    const QString defaultFontFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    m_fontCombo->setCurrentFont(QFont(settings.value(QStringLiteral("global/fontFamily"), defaultFontFamily).toString()));
+    m_fontSizeSpin->setValue(settings.value(QStringLiteral("global/fontSize"), 12).toInt());
+    m_downloadDirectoryEdit->setText(settings.value(
+        QStringLiteral("global/downloadDirectory"),
+        QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString());
     onConnectionTypeChanged(m_connectionTypeCombo->currentIndex());
 }
 
@@ -195,13 +206,6 @@ void NewSessionDialog::buildCategoryPages()
     m_profileName = new QLineEdit(this);
     m_profileName->setPlaceholderText(QStringLiteral("Session name"));
     connectionLayout->addRow(QStringLiteral("Name:"), m_profileName);
-
-    auto *profileActionLayout = new QHBoxLayout();
-    m_loadProfileBtn = new QPushButton(QStringLiteral("Load"), this);
-    m_saveProfileBtn = new QPushButton(QStringLiteral("Save"), this);
-    profileActionLayout->addWidget(m_loadProfileBtn);
-    profileActionLayout->addWidget(m_saveProfileBtn);
-    connectionLayout->addRow(QStringLiteral(""), profileActionLayout);
 
     m_connectionTypeCombo = new QComboBox(this);
     m_connectionTypeCombo->addItem(QStringLiteral("Local Shell"));

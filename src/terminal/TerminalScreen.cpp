@@ -201,8 +201,11 @@ const QVector<TerminalCell> &TerminalScreen::scrollbackLine(int index) const
 
 void TerminalScreen::addToScrollback(const QVector<TerminalCell> &line)
 {
+    if (m_scrollbackLimit == 0)
+        return;
+
     m_scrollback.append(line);
-    if (m_scrollback.size() > MAX_SCROLLBACK) {
+    while (m_scrollback.size() > m_scrollbackLimit) {
         m_scrollback.removeFirst();
     }
 }
@@ -210,6 +213,13 @@ void TerminalScreen::addToScrollback(const QVector<TerminalCell> &line)
 void TerminalScreen::clearScrollback()
 {
     m_scrollback.clear();
+}
+
+void TerminalScreen::setScrollbackLimit(int lines)
+{
+    m_scrollbackLimit = std::max(0, lines);
+    while (m_scrollback.size() > m_scrollbackLimit)
+        m_scrollback.removeFirst();
 }
 
 void TerminalScreen::enableAltScreen()

@@ -48,9 +48,11 @@ public:
     
     // Scrollback buffer
     int scrollbackSize() const { return m_scrollback.size(); }
+    int scrollbackLimit() const { return m_scrollbackLimit; }
     const QVector<TerminalCell> &scrollbackLine(int index) const;
     void addToScrollback(const QVector<TerminalCell> &line);
     void clearScrollback();
+    void setScrollbackLimit(int lines);
 
     // Text attributes (used by parser)
     TerminalCell &defaultCell() { return m_defaultCell; }
@@ -72,6 +74,5 @@ private:
     TerminalCursor m_cursor;
     TerminalCell m_defaultCell;
     bool m_altScreenEnabled = false;
-    
-    static constexpr int MAX_SCROLLBACK = 10000;  // Maximum lines to keep in scrollback
+    int m_scrollbackLimit = 10000;
 };

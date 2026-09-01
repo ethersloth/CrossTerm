@@ -14,6 +14,8 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFontComboBox>
+#include <QFontDatabase>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QKeySequence>
@@ -26,6 +28,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
+#include <QSpinBox>
 #include <QStatusBar>
 #include <QStandardPaths>
 #include <QTabWidget>
@@ -40,7 +43,7 @@ constexpr int RoleProfileName = Qt::UserRole + 1;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_profileManager(new ProfileManager())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.4.0"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.5.3"));
     resize(1200, 760);
 
     // Load saved profiles
@@ -51,6 +54,22 @@ MainWindow::MainWindow(QWidget *parent)
     populateSessions();
 
     statusBar()->showMessage(QStringLiteral("Ready"));
+}
+
+MainWindow::~MainWindow()
+{
+    if (!m_tabs)
+        return;
+
+    for (int index = 0; index < m_tabs->count(); ++index) {
+        auto *terminal = qobject_cast<TerminalWidget *>(m_tabs->widget(index));
+        if (!terminal || !terminal->connection())
+            continue;
+
+        IConnection *connection = terminal->connection();
+        connection->blockSignals(true);
+        connection->disconnectSession();
+    }
 }
 
 void MainWindow::buildUi()
@@ -202,6 +221,8 @@ void MainWindow::onSessionContextMenu(const QPoint &pos)
     QMenu menu(this);
     QAction *openAction = menu.addAction(QStringLiteral("Open Session"));
     QAction *propertiesAction = menu.addAction(QStringLiteral("Properties..."));
+    menu.addSeparator();
+    QAction *deleteAction = menu.addAction(QStringLiteral("Delete Session..."));
 
     QAction *chosen = menu.exec(m_sessionTree->viewport()->mapToGlobal(pos));
     if (!chosen)
@@ -241,6 +262,29 @@ void MainWindow::onSessionContextMenu(const QPoint &pos)
         }
 
         populateSessions();
+        return;
+    }
+
+    if (chosen == deleteAction) {
+        const QMessageBox::StandardButton confirmation = QMessageBox::question(
+            this,
+            QStringLiteral("Delete Session"),
+            QStringLiteral("Delete the saved session '%1'?\n\nThis cannot be undone.").arg(profileName),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (confirmation != QMessageBox::Yes)
+            return;
+
+        m_profileManager->removeProfile(profileName);
+        if (!m_profileManager->saveProfiles()) {
+            QMessageBox::critical(this,
+                                  QStringLiteral("Delete Session"),
+                                  QStringLiteral("Failed to save the updated session list."));
+            return;
+        }
+
+        populateSessions();
+        statusBar()->showMessage(QStringLiteral("Deleted session: %1").arg(profileName), 2500);
     }
 }
 
@@ -259,6 +303,43 @@ void MainWindow::onGlobalOptions()
     auto *enableLoggingByDefault = new QCheckBox(QStringLiteral("Enable logging by default for new sessions"), &dialog);
     enableLoggingByDefault->setChecked(settings.value(QStringLiteral("global/loggingEnabledByDefault"), false).toBool());
     form->addRow(enableLoggingByDefault);
+
+    auto *scrollbackLines = new QSpinBox(&dialog);
+    scrollbackLines->setRange(100, 100000);
+    scrollbackLines->setSingleStep(1000);
+    scrollbackLines->setValue(settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt());
+    form->addRow(QStringLiteral("Default scrollback lines:"), scrollbackLines);
+
+    auto *fontFamily = new QFontComboBox(&dialog);
+    const QString defaultFontFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    fontFamily->setCurrentFont(QFont(settings.value(QStringLiteral("global/fontFamily"), defaultFontFamily).toString()));
+    form->addRow(QStringLiteral("Default terminal font:"), fontFamily);
+
+    auto *fontSize = new QSpinBox(&dialog);
+    fontSize->setRange(6, 36);
+    fontSize->setValue(settings.value(QStringLiteral("global/fontSize"), 12).toInt());
+    form->addRow(QStringLiteral("Default font size:"), fontSize);
+
+    auto *downloadPathRow = new QWidget(&dialog);
+    auto *downloadPathLayout = new QHBoxLayout(downloadPathRow);
+    downloadPathLayout->setContentsMargins(0, 0, 0, 0);
+    downloadPathLayout->setSpacing(6);
+    auto *downloadDirectory = new QLineEdit(&dialog);
+    downloadDirectory->setText(settings.value(QStringLiteral("global/downloadDirectory"),
+                                              QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString());
+    auto *downloadBrowse = new QPushButton(QStringLiteral("Browse..."), &dialog);
+    downloadPathLayout->addWidget(downloadDirectory, 1);
+    downloadPathLayout->addWidget(downloadBrowse);
+    form->addRow(QStringLiteral("Default ZModem download folder:"), downloadPathRow);
+
+    connect(downloadBrowse, &QPushButton::clicked, &dialog, [&dialog, downloadDirectory]() {
+        const QString selected = QFileDialog::getExistingDirectory(
+            &dialog,
+            QStringLiteral("Select Default Download Folder"),
+            downloadDirectory->text().trimmed());
+        if (!selected.isEmpty())
+            downloadDirectory->setText(selected);
+    });
 
     auto *logPathRow = new QWidget(&dialog);
     auto *logPathLayout = new QHBoxLayout(logPathRow);
@@ -295,6 +376,10 @@ void MainWindow::onGlobalOptions()
 
     settings.setValue(QStringLiteral("global/loggingEnabledByDefault"), enableLoggingByDefault->isChecked());
     settings.setValue(QStringLiteral("global/logDirectory"), logDirectory->text().trimmed());
+    settings.setValue(QStringLiteral("global/scrollbackLines"), scrollbackLines->value());
+    settings.setValue(QStringLiteral("global/fontFamily"), fontFamily->currentFont().family());
+    settings.setValue(QStringLiteral("global/fontSize"), fontSize->value());
+    settings.setValue(QStringLiteral("global/downloadDirectory"), downloadDirectory->text().trimmed());
     statusBar()->showMessage(QStringLiteral("Global options saved"), 2500);
 }
 
@@ -314,9 +399,23 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         return;
 
     auto *terminal = new TerminalWidget(m_tabs);
-    const QFont sessionFont(profile.fontFamily(), profile.fontSize());
+    QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+    const QString defaultFontFamily = QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    const QString sessionFontFamily = profile.hasProperty(QStringLiteral("font_family"))
+        ? profile.fontFamily()
+        : settings.value(QStringLiteral("global/fontFamily"), defaultFontFamily).toString();
+    const int sessionFontSize = profile.hasProperty(QStringLiteral("font_size"))
+        ? profile.fontSize()
+        : settings.value(QStringLiteral("global/fontSize"), 12).toInt();
+    const QFont sessionFont(sessionFontFamily, sessionFontSize);
     terminal->applySessionFont(sessionFont);
-    terminal->setDownloadDirectory(profile.downloadDirectory());
+    terminal->setDownloadDirectory(profile.hasProperty(QStringLiteral("download_directory"))
+                                       ? profile.downloadDirectory()
+                                       : settings.value(QStringLiteral("global/downloadDirectory"),
+                                                        QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString());
+    const int defaultScrollbackLines = settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt();
+    terminal->setScrollbackLimit(profile.property(QStringLiteral("scrollback_lines"),
+                                                  QString::number(defaultScrollbackLines)).toInt());
 
     // Create connection based on profile type
     IConnection *connection = nullptr;
@@ -387,7 +486,6 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
     });
 
     // Session logging: per-profile option, falls back to global defaults.
-    QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
     bool logEnabled = settings.value(QStringLiteral("global/loggingEnabledByDefault"), false).toBool();
     const QString rawEnabled = profile.property(QStringLiteral("session_log_enabled"));
     if (!rawEnabled.isEmpty()) {

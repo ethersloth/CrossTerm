@@ -6,6 +6,7 @@
 #include <memory>
 
 class IConnection;
+class TerminalCell;
 class TerminalScreen;
 class TerminalParser;
 class ZModemProtocol;
@@ -21,6 +22,7 @@ public:
     IConnection *connection() const;
     void applySessionFont(const QFont &font);
     void setDownloadDirectory(const QString &directory) { m_downloadDirectory = directory; }
+    void setScrollbackLimit(int lines);
 
 signals:
     void reconnectRequested();
@@ -31,6 +33,11 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     bool focusNextPrevChild(bool next) override;
 
 private slots:
@@ -49,6 +56,13 @@ private:
     void maybePromptForZModemTransfer(const QByteArray &data);
     void scheduleZModemDetection();
     void handleZModemTransferPrompt(const QString &command, bool uploadToRemote);
+    const TerminalCell &displayCellAt(int row, int column) const;
+    QPoint terminalPositionAt(const QPoint &pixelPosition) const;
+    bool hasSelection() const;
+    bool isCellSelected(int logicalRow, int column) const;
+    QString selectedText() const;
+    void copySelection();
+    void pasteClipboard();
 
     bool m_zmodemPromptActive = false;
     bool m_zmodemDetectionPending = false;
@@ -70,6 +84,10 @@ private:
     int m_charWidth = 8;
     int m_charHeight = 16;
     int m_ascent = 12;
+    int m_scrollOffset = 0;
+    QPoint m_selectionStart{-1, -1};
+    QPoint m_selectionEnd{-1, -1};
+    bool m_selecting = false;
     bool m_cursorBlinkState = true;
     QTimer *m_cursorBlinkTimer = nullptr;
     QTimer *m_zmodemDetectionTimer = nullptr;

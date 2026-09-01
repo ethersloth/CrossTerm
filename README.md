@@ -1,124 +1,243 @@
-# CrossTerm 0.4.0
+# CrossTerm 0.5.3
 
-CrossTerm is a Qt 6 desktop terminal and connection manager for Windows and Linux, built with C++20 and CMake. It provides saved connection profiles, tabbed sessions, local shells, SSH sessions, session logging, and ZModem file transfers over SSH.
+CrossTerm is a Qt 6 desktop terminal and connection manager for Windows and Linux, built with C++20 and CMake.
 
-The current Windows package is the primary tested target.
+It provides saved connection profiles, tabbed sessions, local shells, SSH sessions, session logging, and ZModem file transfers over SSH.
+
+> **Current status:** Windows is the primary tested and packaged target. Linux support is available but still requires equivalent end-to-end packaging validation.
 
 ## Highlights
 
-- Local shell sessions and SSH sessions backed by Windows ConPTY
+- Local shell and SSH sessions backed by Windows ConPTY
 - Tabbed terminal workspace with a dockable session tree
-- Saved session profiles for local shell and SSH connections
+- Saved connection profiles for local shell and SSH connections
 - SSH host, port, username, and private-key configuration
 - Per-profile fonts, terminal settings, appearance options, and session logging
 - ZModem uploads and downloads over SSH using `rz` and `sz`
-- Per-profile ZModem download folder for automatic `sz` downloads
+- Per-profile ZModem download folders for automatic `sz` downloads
 - Windows release packaging with Qt runtime deployment
+- Optional Windows installer built with Inno Setup
 
-## Quick start on Windows
+## Quick Start on Windows
 
-1. Download or build the package.
-2. Run `dist\windows\bin\CrossTerm.exe`.
+1. Download or build the Windows package.
+2. Run:
+
+   ```text
+   dist\windows\bin\CrossTerm.exe
+   ```
+
 3. Create or load an SSH profile under **Session**.
-4. Connect and use the terminal as usual.
+4. Connect and use the terminal normally.
 
-SSH sessions use the Windows OpenSSH client. Ensure `ssh.exe` is available on `PATH`. For key authentication, configure the private-key path in the profile. Password authentication and first-time host-key confirmation must be completed through your SSH configuration before a non-interactive transfer begins.
+### SSH Requirements
 
-## ZModem transfers over SSH
+SSH sessions use the Windows OpenSSH client. Ensure `ssh.exe` is available on `PATH`.
 
-CrossTerm packages Windows builds of the `lrzsz` `sz` and `rz` helpers alongside the application. The transfer stream uses a separate raw SSH process so binary protocol data does not pass through the interactive terminal.
+For key authentication, configure the private-key path in the session profile.
 
-### Download from the remote host
+Password authentication and first-time host-key confirmation must be completed through your SSH configuration before a non-interactive transfer begins.
 
-Set **ZModem download folder** in the session profile. Then, on the remote shell, run:
+## ZModem Transfers over SSH
+
+CrossTerm packages Windows builds of the `lrzsz` `sz` and `rz` helpers alongside the application.
+
+ZModem transfers use a separate raw SSH process so binary protocol data does not pass through the interactive terminal.
+
+### Download from the Remote Host
+
+Set the **ZModem download folder** in the session profile.
+
+Then run `sz` from the remote shell:
 
 ```bash
 sz filename.zip
 ```
 
-CrossTerm saves the received file directly to the configured folder using the remote filename.
+CrossTerm saves the received file directly to the configured download folder using the remote filename.
 
-### Upload to the remote host
+### Upload to the Remote Host
 
-On the remote shell, run:
+From the remote shell, run:
 
 ```bash
 rz
 ```
 
-CrossTerm opens a local-file picker, then transfers the selected file to the remote session's working directory.
+CrossTerm opens a local file picker and transfers the selected file to the remote session's working directory.
 
-For binary-transfer verification, compare SHA-256 hashes after a transfer:
+### Verify a Binary Transfer
+
+For binary-transfer verification, compare SHA-256 hashes after the transfer.
+
+On the remote Linux host:
 
 ```bash
 sha256sum filename.zip
 ```
 
+On Windows:
+
 ```powershell
 Get-FileHash "C:\path\to\filename.zip" -Algorithm SHA256
 ```
 
-## Build from source
+The hashes should match.
+
+## Build from Source
 
 ### Windows
 
-Install Qt 6, CMake, Ninja, and MSVC 2022. The build script locates the supported toolchain, builds a Release configuration, builds `sz.exe` and `rz.exe`, and runs `windeployqt`.
+Install the following build dependencies:
+
+- Qt 6
+- CMake
+- Ninja
+- Microsoft Visual Studio 2022 C++ build tools
+
+Run:
 
 ```bat
 build_windows.bat
+```
+
+The build script locates the supported toolchain, builds CrossTerm in Release configuration, builds the `sz.exe` and `rz.exe` helpers, and runs `windeployqt`.
+
+The packaged application is located at:
+
+```text
 dist\windows\bin\CrossTerm.exe
 ```
 
-Use the executable in `dist\windows\bin`, not the intermediate binary in `build-windows`.
+Use this executable rather than the intermediate binary in `build-windows`.
 
-For distribution, do not share only `CrossTerm.exe`. Share either:
+### Windows Distribution Package
 
-- `dist\windows\bin` as a full folder, or
-- `dist\windows\CrossTerm-windows-x64.zip` generated by `build_windows.bat`.
+Do **not** distribute `CrossTerm.exe` by itself.
 
-The package includes required Qt runtime DLLs (for example `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Widgets.dll`) and platform plugins that must stay next to the executable.
+Distribute either:
 
-### Automated Windows package in GitHub Actions
+```text
+dist\windows\bin
+```
 
-The workflow at `.github/workflows/windows-package.yml` builds on a clean `windows-2022` runner, runs `build_windows.bat`, and uploads a packaged artifact.
+as the complete folder, or:
 
-- Run manually from the **Actions** tab using the **Windows Package** workflow, or
-- Push a version tag like `v0.4.1` to trigger it automatically.
+```text
+dist\windows\CrossTerm-windows-x64.zip
+```
 
-Download `CrossTerm-windows-package` from the workflow run artifacts and distribute the included zip or full `bin` folder.
+generated by `build_windows.bat`.
 
-### Linux
+The package contains the runtime components required by CrossTerm, including Qt libraries such as:
 
-Install the Qt 6 development packages, CMake, and a C++20 compiler. On Fedora:
+```text
+Qt6Core.dll
+Qt6Gui.dll
+Qt6Widgets.dll
+```
+
+It also contains the required Qt platform plugins and other runtime components that must remain with the executable.
+
+## Automated Windows Packaging with GitHub Actions
+
+The workflow:
+
+```text
+.github/workflows/windows-package.yml
+```
+
+builds CrossTerm on a clean `windows-2022` GitHub Actions runner, executes `build_windows.bat`, and uploads the resulting Windows package as an artifact.
+
+The workflow can be started by:
+
+- Manually running **Windows Package** from the repository's **Actions** tab
+- Pushing a version tag such as `v0.5.3`, if tag-triggered builds are enabled in the workflow
+
+The resulting workflow artifact is:
+
+```text
+CrossTerm-windows-package
+```
+
+Download the artifact and distribute either the included ZIP package or complete `bin` directory.
+
+## Windows Installer
+
+CrossTerm can also be packaged as a conventional Windows installer.
+
+Install [Inno Setup 6](https://jrsoftware.org/isdl.php) on the build machine, then run:
+
+```bat
+build_installer.bat
+```
+
+The installer is created under:
+
+```text
+dist\installer\
+```
+
+For CrossTerm 0.5.3, the expected installer is:
+
+```text
+dist\installer\CrossTerm-0.5.3-windows-x64-setup.exe
+```
+
+The installer deploys the complete CrossTerm runtime package under:
+
+```text
+C:\Program Files\CrossTerm
+```
+
+It also creates a Start Menu shortcut and can offer a desktop shortcut.
+
+End users do not need Qt or the Visual Studio development environment installed.
+
+## Linux
+
+Install the Qt 6 development packages, CMake, Ninja, and a C++20 compiler.
+
+For example, on Fedora:
 
 ```bash
 sudo dnf install gcc-c++ cmake ninja-build qt6-qtbase-devel
+
 chmod +x build_linux.sh
 ./build_linux.sh
+```
+
+Run CrossTerm with:
+
+```bash
 ./dist/linux/bin/CrossTerm
 ```
 
-## Project layout
+Linux packaging has not yet received the same level of end-to-end validation as the Windows package.
+
+## Project Layout
 
 ```text
 src/
-    connections/  Local shell, SSH, and Windows ConPTY implementations
-    dialogs/      Session profile editor
-    profiles/     Saved connection-profile storage
-    terminal/     ANSI/VT parser and screen model
-    transfer/     ZModem transfer orchestration and codec foundation
-    widgets/      Terminal UI
+    connections/   Local shell, SSH, and Windows ConPTY implementations
+    dialogs/       Session profile editor
+    profiles/      Saved connection-profile storage
+    terminal/      ANSI/VT parser and screen model
+    transfer/      ZModem transfer orchestration and codec foundation
+    widgets/       Terminal UI
+
 third_party/
-    lrzsz/        Vendored lrzsz sources used for Windows transfer helpers
-    rzsz-main/    Rust-derived ZModem protocol reference implementation
+    lrzsz/         Vendored lrzsz sources used for Windows transfer helpers
+    rzsz-main/     Rust-derived ZModem protocol reference implementation
 ```
 
-## Current limitations
+## Current Limitations
 
-- Windows is the current validated package target; Linux packaging needs equivalent end-to-end validation.
-- Serial and Telnet profiles are visible in the UI but are not implemented.
-- Port forwarding, SFTP/SCP, macros, and scripting are not implemented.
-- The terminal engine supports common shell usage and ANSI output, but it is not yet a complete xterm emulator. Complex full-screen applications may have rendering or input limitations.
+- Windows is the current validated package target; Linux packaging requires equivalent end-to-end validation.
+- Serial and Telnet profiles are visible in the UI but are not yet implemented.
+- Port forwarding, SFTP/SCP, macros, and scripting are not yet implemented.
+- The terminal engine supports common shell usage and ANSI output but is not yet a complete xterm emulator.
+- Complex full-screen terminal applications may have rendering or input limitations.
 
 ## Roadmap
 
@@ -126,17 +245,35 @@ third_party/
 2. Implement serial and Telnet connections.
 3. Add port forwarding and SFTP/SCP workflows.
 4. Add reconnect, keepalive, macros, and scripting support.
-5. Produce tested Windows and Linux release artifacts.
+5. Produce fully tested Windows and Linux release artifacts.
 
-## Reporting issues
+## Reporting Issues
 
-Please include the CrossTerm version, operating system, connection type, steps to reproduce, expected behavior, actual behavior, and relevant sanitized logs. For ZModem reports, include the `crossterm_zmodem.log` entries around the transfer.
+When reporting an issue, please include:
+
+- CrossTerm version
+- Operating system
+- Connection type
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Relevant sanitized logs
+
+For ZModem issues, also include the relevant entries from:
+
+```text
+crossterm_zmodem.log
+```
+
+around the time of the transfer.
 
 ## License
 
-CrossTerm is licensed under the GNU General Public License, version 2. See [LICENSE](LICENSE).
+CrossTerm is licensed under the GNU General Public License, version 2.
 
-The repository includes third-party protocol sources with their own license notices:
+See [LICENSE](LICENSE) for details.
 
-- `third_party/lrzsz` is distributed under GPL-2.0.
-- `third_party/rzsz-main` is an Apache-2.0 licensed reference implementation.
+The repository also includes third-party protocol sources with their own license notices:
+
+- `third_party/lrzsz` — GPL-2.0
+- `third_party/rzsz-main` — Apache-2.0 licensed reference implementation
