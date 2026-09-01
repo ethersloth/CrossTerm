@@ -5,6 +5,8 @@ set "PROJECT_DIR=%~dp0"
 if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
 set "BUILD_DIR=%PROJECT_DIR%\build-windows"
 set "PACKAGE_DIR=%PROJECT_DIR%\dist\windows"
+set "PACKAGE_BIN_DIR=%PACKAGE_DIR%\bin"
+set "ZIP_PATH=%PACKAGE_DIR%\CrossTerm-windows-x64.zip"
 set "RC_EXE="
 set "MT_EXE="
 set "CMAKE_TOOL_FLAGS="
@@ -66,11 +68,33 @@ mkdir "%PACKAGE_DIR%"
 cmake --install "%BUILD_DIR%" --prefix "%PACKAGE_DIR%" --config Release
 if errorlevel 1 exit /b 1
 
-windeployqt --release --compiler-runtime "%PACKAGE_DIR%\bin\CrossTerm.exe"
+windeployqt --release --compiler-runtime "%PACKAGE_BIN_DIR%\CrossTerm.exe"
 if errorlevel 1 exit /b 1
 
+if not exist "%PACKAGE_BIN_DIR%\Qt6Core.dll" (
+    echo Error: Qt6Core.dll was not deployed to the package.
+    exit /b 1
+)
+if not exist "%PACKAGE_BIN_DIR%\Qt6Gui.dll" (
+    echo Error: Qt6Gui.dll was not deployed to the package.
+    exit /b 1
+)
+if not exist "%PACKAGE_BIN_DIR%\Qt6Widgets.dll" (
+    echo Error: Qt6Widgets.dll was not deployed to the package.
+    exit /b 1
+)
+
+if exist "%ZIP_PATH%" del /f /q "%ZIP_PATH%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path '%PACKAGE_DIR%\bin\*' -DestinationPath '%ZIP_PATH%' -CompressionLevel Optimal"
+if errorlevel 1 (
+    echo Warning: Failed to create zip archive. The packaged folder is still usable.
+) else (
+    echo Created distributable archive: %ZIP_PATH%
+)
+
 echo.
-echo Release package complete: %PACKAGE_DIR%\bin\CrossTerm.exe
+echo Release package complete: %PACKAGE_BIN_DIR%\CrossTerm.exe
+echo Distribute the full package folder or zip archive, not the standalone exe.
 echo Note: Use the packaged exe above, not %BUILD_DIR%\CrossTerm.exe.
 endlocal
 exit /b 0
