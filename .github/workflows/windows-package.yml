@@ -1,0 +1,42 @@
+name: Windows Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: "windows"
+          target: "desktop"
+          arch: "win64_msvc2022_64"
+
+      - name: Set up MSVC dev command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build and package
+        shell: cmd
+        run: |
+          call build_windows.bat
+
+      - name: Upload packaged app
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossTerm-windows-package
+          path: |
+            dist/windows/bin/**
+            dist/windows/CrossTerm-windows-x64.zip
+          if-no-files-found: error
