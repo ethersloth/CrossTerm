@@ -27,10 +27,14 @@ jobs:
         with:
           arch: x64
 
-      - name: Build and package
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build, package, and create installer
         shell: cmd
         run: |
-          call build_windows.bat
+          call build_installer.bat
 
       - name: Upload packaged app
         uses: actions/upload-artifact@v4
@@ -39,4 +43,11 @@ jobs:
           path: |
             dist/windows/bin/**
             dist/windows/CrossTerm-windows-x64.zip
+          if-no-files-found: error
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossTerm-windows-installer
+          path: dist/installer/*.exe
           if-no-files-found: error
