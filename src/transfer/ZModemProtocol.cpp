@@ -113,9 +113,10 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
         remoteCommandPrefix = QStringLiteral("cd %1 && ").arg(directoryArgument);
     }
 
-    if (upload)
-        sshArgs << remoteCommandPrefix + QStringLiteral("rz -b -y");
-    else {
+    QString remoteCommand;
+    if (upload) {
+        remoteCommand = remoteCommandPrefix + QStringLiteral("rz -b -y");
+    } else {
         QString sourceArgument = remotePath.trimmed();
         if (sourceArgument.isEmpty()) {
             QString sourcePath = QFileInfo(path).fileName();
@@ -125,8 +126,17 @@ void ZModemProtocol::startExternalTransfer(IConnection *connection, const QStrin
                 ? QStringLiteral("\"%1\"").arg(sourcePath)
                 : shellQuote(sourcePath);
         }
-        sshArgs << remoteCommandPrefix + QStringLiteral("sz -b -y -- %1").arg(sourceArgument);
+        remoteCommand = remoteCommandPrefix + QStringLiteral("sz -b -y -- %1").arg(sourceArgument);
     }
+
+    // "ssh host command" runs the remote shell non-interactively, so most
+    // shells skip sourcing login profiles (/etc/profile, ~/.profile, etc.)
+    // and PATH additions made there - like a manually-installed lrzsz under
+    // /usr/local/bin on many embedded systems - go unseen, even though the
+    // exact same command works when typed into an interactive session.
+    // Explicitly requesting a login shell picks up the same PATH the user
+    // gets when they log in interactively.
+    sshArgs << QStringLiteral("sh -lc %1").arg(shellQuote(remoteCommand));
 
     logZModemEvent(QStringLiteral("Remote transfer command: ssh %1").arg(sshArgs.join(QLatin1Char(' '))));
 
