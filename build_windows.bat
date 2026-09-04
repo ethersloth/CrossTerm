@@ -163,9 +163,15 @@ echo.
 echo [4/6] Deploying Qt runtime...
 echo.
 
+rem CrossTerm is a plain QtWidgets app (no QOpenGLWidget, Qt Quick, or QML),
+rem so it never needs Qt's OpenGL/ANGLE fallback rendering paths. Skipping
+rem them drops the Mesa software rasterizer and Direct3D shader compiler
+rem DLLs, which otherwise account for a large share of package size.
 windeployqt ^
     --release ^
     --compiler-runtime ^
+    --no-opengl-sw ^
+    --no-angle ^
     "%PACKAGE_BIN_DIR%\CrossTerm.exe"
 
 if errorlevel 1 (
