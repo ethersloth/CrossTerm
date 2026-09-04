@@ -146,7 +146,7 @@ protected:
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_profileManager(new ProfileManager())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.6.0"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.6.1"));
     resize(1200, 760);
 
     // Load saved profiles
@@ -265,7 +265,7 @@ void MainWindow::buildMenus()
     connect(about, &QAction::triggered, this, [this] {
         QMessageBox::about(this,
                            QStringLiteral("About CrossTerm"),
-                           QStringLiteral("CrossTerm 0.6.0\n\n"
+                           QStringLiteral("CrossTerm 0.6.1\n\n"
                                           "A cross-platform terminal and connection manager built with C++20 and Qt 6.\n\n"
                                           "Features:\n"
                                           "• VT100 Terminal Emulation\n"
