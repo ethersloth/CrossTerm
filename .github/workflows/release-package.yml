@@ -1,4 +1,4 @@
-name: Windows Package
+name: Release Package
 
 on:
   workflow_dispatch:
@@ -50,4 +50,43 @@ jobs:
         with:
           name: CrossTerm-windows-installer
           path: dist/installer/*.exe
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: "linux"
+          target: "desktop"
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential ninja-build
+
+      - name: Build and package
+        run: bash build_linux.sh
+
+      - name: Create versioned tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$VERSION" = "$GITHUB_REF_NAME" ]; then
+            VERSION="dev"
+          fi
+          PKG_NAME="CrossTerm-${VERSION}-linux-x86_64"
+          mkdir -p "/tmp/$PKG_NAME"
+          cp -r dist/linux/* "/tmp/$PKG_NAME/"
+          mkdir -p dist/archives
+          tar -czf "dist/archives/${PKG_NAME}.tar.gz" -C /tmp "$PKG_NAME"
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrossTerm-linux-package
+          path: dist/archives/*.tar.gz
           if-no-files-found: error
