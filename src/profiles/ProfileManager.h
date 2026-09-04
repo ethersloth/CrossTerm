@@ -24,6 +24,14 @@ public:
     QStringList profileNames() const;
     bool hasProfile(const QString &name) const;
 
+    // Session folder operations. Folder paths are "/"-separated (e.g. "Work/Prod").
+    QStringList folders() const { return m_folders; }
+    void setFolders(const QStringList &folders);
+    void addFolder(const QString &path);
+    void removeFolder(const QString &path);
+    void renameFolder(const QString &oldPath, const QString &newPath);
+    bool hasFolder(const QString &path) const { return m_folders.contains(path); }
+
     // File I/O
     bool loadProfiles();
     bool saveProfiles();
@@ -36,5 +44,6 @@ private:
     QString getDefaultProfilesPath() const;
 
     QList<ConnectionProfile> m_profiles;
+    QStringList m_folders;
     QString m_profilesPath;
 };

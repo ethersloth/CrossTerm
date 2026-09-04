@@ -69,6 +69,81 @@ bool ProfileManager::hasProfile(const QString &name) const
     return false;
 }
 
+namespace {
+bool isPathOrDescendant(const QString &path, const QString &ancestor)
+{
+    return path == ancestor || path.startsWith(ancestor + QStringLiteral("/"));
+}
+}
+
+void ProfileManager::setFolders(const QStringList &folders)
+{
+    m_folders.clear();
+    for (const auto &path : folders) {
+        if (!path.isEmpty() && !m_folders.contains(path))
+            m_folders.append(path);
+    }
+}
+
+void ProfileManager::addFolder(const QString &path)
+{
+    if (path.isEmpty())
+        return;
+
+    // Also register any implied parent folders so they show up even if empty.
+    const QStringList parts = path.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    QString current;
+    for (const auto &part : parts) {
+        current = current.isEmpty() ? part : current + QStringLiteral("/") + part;
+        if (!m_folders.contains(current))
+            m_folders.append(current);
+    }
+}
+
+void ProfileManager::removeFolder(const QString &path)
+{
+    if (path.isEmpty())
+        return;
+
+    // Sessions inside the removed folder (or its subfolders) move to the top level.
+    for (auto &profile : m_profiles) {
+        if (isPathOrDescendant(profile.folder(), path))
+            profile.setFolder(QString());
+    }
+
+    QStringList kept;
+    for (const auto &f : std::as_const(m_folders)) {
+        if (!isPathOrDescendant(f, path))
+            kept.append(f);
+    }
+    m_folders = kept;
+}
+
+void ProfileManager::renameFolder(const QString &oldPath, const QString &newPath)
+{
+    if (oldPath.isEmpty() || newPath.isEmpty() || oldPath == newPath)
+        return;
+
+    for (auto &profile : m_profiles) {
+        const QString f = profile.folder();
+        if (f == oldPath) {
+            profile.setFolder(newPath);
+        } else if (f.startsWith(oldPath + QStringLiteral("/"))) {
+            profile.setFolder(newPath + f.mid(oldPath.length()));
+        }
+    }
+
+    for (auto &f : m_folders) {
+        if (f == oldPath) {
+            f = newPath;
+        } else if (f.startsWith(oldPath + QStringLiteral("/"))) {
+            f = newPath + f.mid(oldPath.length());
+        }
+    }
+
+    addFolder(newPath);
+}
+
 bool ProfileManager::loadProfiles()
 {
     QFile file(m_profilesPath);
@@ -81,12 +156,27 @@ bool ProfileManager::loadProfiles()
     QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
     file.close();
 
-    if (!doc.isArray())
-        return false;
-
     m_profiles.clear();
-    QJsonArray array = doc.array();
-    for (const auto &value : array) {
+    m_folders.clear();
+
+    QJsonArray profilesArray;
+    if (doc.isArray()) {
+        // Legacy format: a bare array of profiles, no folders.
+        profilesArray = doc.array();
+    } else if (doc.isObject()) {
+        const QJsonObject root = doc.object();
+        profilesArray = root[QStringLiteral("profiles")].toArray();
+        const QJsonArray foldersArray = root[QStringLiteral("folders")].toArray();
+        for (const auto &value : foldersArray) {
+            const QString path = value.toString();
+            if (!path.isEmpty() && !m_folders.contains(path))
+                m_folders.append(path);
+        }
+    } else {
+        return false;
+    }
+
+    for (const auto &value : profilesArray) {
         if (value.isObject()) {
             m_profiles.append(ConnectionProfile::fromJson(value.toObject()));
         }
@@ -104,12 +194,21 @@ bool ProfileManager::saveProfiles()
             return false;
     }
 
-    QJsonArray array;
+    QJsonArray profilesArray;
     for (const auto &profile : m_profiles) {
-        array.append(profile.toJson());
+        profilesArray.append(profile.toJson());
     }
 
-    QJsonDocument doc(array);
+    QJsonArray foldersArray;
+    for (const auto &folder : m_folders) {
+        foldersArray.append(folder);
+    }
+
+    QJsonObject root;
+    root[QStringLiteral("profiles")] = profilesArray;
+    root[QStringLiteral("folders")] = foldersArray;
+
+    QJsonDocument doc(root);
 
     QFile file(m_profilesPath);
     if (!file.open(QIODevice::WriteOnly))

@@ -80,6 +80,18 @@ public:
     QString downloadDirectory() const { return property(QStringLiteral("download_directory")); }
     void setDownloadDirectory(const QString &directory) { setProperty(QStringLiteral("download_directory"), directory); }
 
+    // Session folder (path of "/"-separated folder names; empty means top level)
+    QString folder() const { return property(QStringLiteral("folder")); }
+    void setFolder(const QString &folder) { setProperty(QStringLiteral("folder"), folder); }
+
+    // Session color tag (hex string, e.g. "#e74c3c"); empty means no color.
+    QString sessionColor() const { return property(QStringLiteral("color")); }
+    void setSessionColor(const QString &hexColor) { setProperty(QStringLiteral("color"), hexColor); }
+
+    // Whether this session is pinned to the top of the session tree.
+    bool isPinned() const { return property(QStringLiteral("pinned")) == QStringLiteral("1"); }
+    void setPinned(bool pinned) { setProperty(QStringLiteral("pinned"), pinned ? QStringLiteral("1") : QStringLiteral("0")); }
+
     // Serialization
     QJsonObject toJson() const;
     static ConnectionProfile fromJson(const QJsonObject &obj);
