@@ -1,5 +1,5 @@
 #define MyAppName "CrossTerm"
-#define MyAppVersion "0.5.3"
+#define MyAppVersion "0.6.0"
 #define MyAppPublisher "ethersloth"
 #define MyAppExeName "CrossTerm.exe"
 
@@ -13,7 +13,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist\installer
-OutputBaseFilename=CrossTerm-0.5.3-windows-x64-setup
+OutputBaseFilename=CrossTerm-0.6.0-windows-x64-setup
 SetupIconFile=..\assets\cross_term_logo.ico
 UninstallDisplayIcon={app}\bin\{#MyAppExeName}
 Compression=lzma2

@@ -19,11 +19,10 @@ rem already available in the current environment.
 rem ============================================================================
 
 set "APP_NAME=CrossTerm"
-set "APP_VERSION=0.5.3"
+set "APP_VERSION=0.6.0"
 
 set "PROJECT_DIR=%~dp0"
 if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
-
 set "BUILD_DIR=%PROJECT_DIR%\build-windows"
 set "PACKAGE_DIR=%PROJECT_DIR%\dist\windows"
 set "PACKAGE_BIN_DIR=%PACKAGE_DIR%\bin"

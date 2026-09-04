@@ -61,4 +61,26 @@ typedef int pid_t;
 #define S_IFIFO _S_IFIFO
 #define S_IFBLK 0
 #define alarm(seconds) 0
+#elif defined(_WIN32)
+/* MinGW already provides POSIX-compatible pid_t/mode_t/stat/read/write/etc.
+ * via its own headers, unlike MSVC. Only the handful of POSIX signals, the
+ * termios speed_t type, and symlink-aware lstat are genuinely missing.
+ * WIN32_LEAN_AND_MEAN keeps windows.h from pulling in the legacy winsock1
+ * header, whose dllimport'd gethostname() would otherwise clash with the
+ * plain gethostname() this project defines in windows_stubs.c. */
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+typedef unsigned long speed_t;
+#define lstat _stat
+#define S_ISLNK(mode) 0
+#define getuid() 0
+#define geteuid() 0
+#define sleep(seconds) Sleep((seconds) * 1000)
+#define SIGALRM 14
+#define SIGQUIT 3
+#define SIGPIPE 13
+#define SIGHUP 1
+#define alarm(seconds) 0
 #endif

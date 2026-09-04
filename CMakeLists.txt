@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(CrossTerm VERSION 0.5.3 LANGUAGES CXX C)
+project(CrossTerm VERSION 0.6.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +11,13 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets)
 
 if(WIN32)
+    # The vendored lrzsz sources use old K&R-style implicit function
+    # declarations that newer GCC defaults (C23) reject as hard errors.
+    # MSVC never enforced this, so pin an older C standard for these
+    # third-party targets specifically when building with GCC/MinGW.
+    set(CMAKE_C_STANDARD 17)
+    set(CMAKE_C_STANDARD_REQUIRED OFF)
+
     set(LRZSZ_SENDER_SOURCES
         third_party/lrzsz/src/lsz.c
         third_party/lrzsz/src/timing.c
@@ -29,12 +36,21 @@ if(WIN32)
         third_party/lrzsz/lib/getopt1.c
         third_party/lrzsz/windows_stubs.c
     )
+    # These old sources also omit standard-library includes that newer GCC
+    # no longer forgives; downgrade that specific check back to a warning
+    # (as MSVC effectively treats it) rather than editing 1990s vendor code.
+    set(LRZSZ_GCC_COMPAT_OPTIONS
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-error=implicit-function-declaration>
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-error=incompatible-pointer-types>
+    )
+
     add_library(CrossTermLrzszSender STATIC ${LRZSZ_SENDER_SOURCES})
     target_compile_definitions(CrossTermLrzszSender PRIVATE
         HAVE_CONFIG_H=1
         __STDC__=1
         main=crossterm_lrzsz_sender_main
     )
+    target_compile_options(CrossTermLrzszSender PRIVATE ${LRZSZ_GCC_COMPAT_OPTIONS})
     target_include_directories(CrossTermLrzszSender PRIVATE
         third_party/lrzsz
         third_party/lrzsz/src
@@ -46,6 +62,7 @@ if(WIN32)
         HAVE_CONFIG_H=1
         __STDC__=1
     )
+    target_compile_options(CrossTermSz PRIVATE ${LRZSZ_GCC_COMPAT_OPTIONS})
     target_include_directories(CrossTermSz PRIVATE
         third_party/lrzsz
         third_party/lrzsz/src
@@ -61,6 +78,7 @@ if(WIN32)
         HAVE_CONFIG_H=1
         __STDC__=1
     )
+    target_compile_options(CrossTermRz PRIVATE ${LRZSZ_GCC_COMPAT_OPTIONS})
     target_include_directories(CrossTermRz PRIVATE
         third_party/lrzsz
         third_party/lrzsz/src
