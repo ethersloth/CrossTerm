@@ -1,6 +1,7 @@
 #include "ConnectionProfile.h"
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonDocument>
 
 ConnectionProfile::ConnectionProfile(const QString &name, ConnectionType type)
     : m_name(name), m_type(type)
