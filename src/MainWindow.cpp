@@ -255,6 +255,35 @@ void MainWindow::buildMenus()
     auto *sessionMenu = menuBar()->addMenu(QStringLiteral("&Session"));
     sessionMenu->addAction(newSession);
     sessionMenu->addAction(newLocal);
+    sessionMenu->addSeparator();
+    m_savedCommandsMenu = sessionMenu->addMenu(QStringLiteral("Saved Commands"));
+    connect(m_savedCommandsMenu, &QMenu::aboutToShow, this, [this]() {
+        m_savedCommandsMenu->clear();
+        auto *terminal = qobject_cast<TerminalWidget *>(m_tabs->currentWidget());
+        if (!terminal) {
+            QAction *unavailable = m_savedCommandsMenu->addAction(QStringLiteral("No active session"));
+            unavailable->setEnabled(false);
+            return;
+        }
+
+        const auto commands = terminal->savedCommands();
+        if (commands.isEmpty()) {
+            QAction *empty = m_savedCommandsMenu->addAction(QStringLiteral("No commands saved for this session"));
+            empty->setEnabled(false);
+            return;
+        }
+
+        const bool connected = terminal->connection() && terminal->connection()->isConnected();
+        for (const auto &[name, command] : commands) {
+            QAction *commandAction = m_savedCommandsMenu->addAction(name);
+            commandAction->setToolTip(command);
+            commandAction->setEnabled(connected);
+            connect(commandAction, &QAction::triggered, terminal, [this, terminal, name, command]() {
+                if (terminal->runCommand(command))
+                    statusBar()->showMessage(QStringLiteral("Sent command: %1").arg(name), 2500);
+            });
+        }
+    });
 
     auto *globalOptionsMenu = menuBar()->addMenu(QStringLiteral("&Global Options"));
     auto *globalSettings = globalOptionsMenu->addAction(QStringLiteral("Settings..."));
@@ -982,6 +1011,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
     const int defaultScrollbackLines = settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt();
     terminal->setScrollbackLimit(profile.property(QStringLiteral("scrollback_lines"),
                                                   QString::number(defaultScrollbackLines)).toInt());
+    terminal->setSavedCommands(profile.savedCommands());
 
     // Create connection based on profile type
     IConnection *connection = nullptr;

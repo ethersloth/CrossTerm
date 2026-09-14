@@ -11,6 +11,7 @@ It provides saved connection profiles, tabbed sessions, local shells, SSH sessio
 - Local shell and SSH sessions backed by Windows ConPTY
 - Tabbed terminal workspace with a dockable session tree
 - Saved connection profiles for local shell and SSH connections
+- Named commands saved per connection profile and run from the active session
 - SSH host, port, username, and private-key configuration
 - Per-profile fonts, terminal settings, appearance options, and session logging
 - ZModem uploads and downloads over SSH using `rz` and `sz`
@@ -29,6 +30,13 @@ It provides saved connection profiles, tabbed sessions, local shells, SSH sessio
 
 3. Create or load an SSH profile under **Session**.
 4. Connect and use the terminal normally.
+
+### Saved Commands
+
+Open a session profile's **Commands** page to add named commands. Once that
+profile is connected, choose the command from **Session > Saved Commands** to
+send it to the active terminal and execute it. Commands run only when selected;
+they are not sent automatically when a connection opens.
 
 ### SSH Requirements
 

@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "../src/profiles/ConnectionProfile.h"
 #include "../src/terminal/TerminalParser.h"
 
 int main()
@@ -44,6 +45,20 @@ int main()
         screen.setScrollbackLimit(1);
         assert(screen.scrollbackSize() == 1);
         assert(screen.scrollbackLine(0).at(0).character == QChar('C'));
+    }
+
+    {
+        ConnectionProfile profile(QStringLiteral("Fedora Server"),
+                                  ConnectionProfile::ConnectionType::SSH);
+        const QList<QPair<QString, QString>> commands = {
+            {QStringLiteral("Update and reboot"),
+             QStringLiteral("sudo dnf -y update && sudo dnf -y upgrade && sudo reboot now")},
+            {QStringLiteral("Check disk space"), QStringLiteral("df -h")},
+        };
+        profile.setSavedCommands(commands);
+
+        const ConnectionProfile restored = ConnectionProfile::fromJson(profile.toJson());
+        assert(restored.savedCommands() == commands);
     }
 
     return 0;

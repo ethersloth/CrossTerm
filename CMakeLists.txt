@@ -125,6 +125,7 @@ add_executable(TerminalParserTest
     src/terminal/TerminalCell.cpp
     src/terminal/TerminalScreen.cpp
     src/terminal/TerminalParser.cpp
+    src/profiles/ConnectionProfile.cpp
 )
 
 target_include_directories(TerminalParserTest PRIVATE src)

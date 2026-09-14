@@ -716,6 +716,18 @@ void TerminalWidget::sendBytes(const QByteArray &data)
         m_connection->writeData(data);
 }
 
+bool TerminalWidget::runCommand(const QString &command)
+{
+    if (!m_connection || !m_connection->isConnected() || command.trimmed().isEmpty())
+        return false;
+
+    m_lastSubmittedCommand = command;
+    m_commandInputBuffer.clear();
+    sendBytes(command.toUtf8() + '\r');
+    setFocus();
+    return true;
+}
+
 void TerminalWidget::applySessionFont(const QFont &font)
 {
     setFont(font);

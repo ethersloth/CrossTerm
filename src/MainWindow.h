@@ -6,6 +6,7 @@ class QTreeWidget;
 class QTabWidget;
 class QTreeWidgetItem;
 class QLineEdit;
+class QMenu;
 class ProfileManager;
 class ConnectionProfile;
 
@@ -43,5 +44,6 @@ private:
     QTreeWidget *m_sessionTree = nullptr;
     QLineEdit *m_sessionFilterEdit = nullptr;
     QTabWidget *m_tabs = nullptr;
+    QMenu *m_savedCommandsMenu = nullptr;
     ProfileManager *m_profileManager = nullptr;
 };

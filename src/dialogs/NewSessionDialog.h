@@ -94,4 +94,9 @@ private:
     QPushButton *m_logBrowseBtn = nullptr;
     QLineEdit *m_downloadDirectoryEdit = nullptr;
     QPushButton *m_downloadDirectoryBrowseBtn = nullptr;
+
+    // Saved commands
+    QListWidget *m_savedCommandList = nullptr;
+    QLineEdit *m_savedCommandName = nullptr;
+    QLineEdit *m_savedCommandText = nullptr;
 };

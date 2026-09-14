@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QDateTime>
+#include <QList>
+#include <QPair>
 #include <QWidget>
 #include <QPointer>
 #include <memory>
@@ -23,6 +25,9 @@ public:
     void applySessionFont(const QFont &font);
     void setDownloadDirectory(const QString &directory) { m_downloadDirectory = directory; }
     void setScrollbackLimit(int lines);
+    void setSavedCommands(const QList<QPair<QString, QString>> &commands) { m_savedCommands = commands; }
+    const QList<QPair<QString, QString>> &savedCommands() const { return m_savedCommands; }
+    bool runCommand(const QString &command);
 
 signals:
     void reconnectRequested();
@@ -72,6 +77,7 @@ private:
     QString m_remoteZmodemPath;
     QString m_remoteWorkingDirectory;
     QString m_downloadDirectory;
+    QList<QPair<QString, QString>> m_savedCommands;
     QByteArray m_promptDetectionBuffer;
     QString m_lastZmodemCommand;
     QDateTime m_lastZmodemPrompt;
