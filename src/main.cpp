@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QApplication::setApplicationName("CrossTerm");
     QApplication::setOrganizationName("CrossTerm");
-    QApplication::setApplicationVersion("0.6.2");
+    QApplication::setApplicationVersion("0.7.3");
     QGuiApplication::setDesktopFileName(QStringLiteral("crossterm"));
 
     QIcon appIcon;
