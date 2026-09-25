@@ -101,6 +101,12 @@ qt_add_executable(CrossTerm
     src/connections/SshConnection.cpp
     src/widgets/TerminalWidget.h
     src/widgets/TerminalWidget.cpp
+    src/widgets/CommandBar.h
+    src/widgets/CommandBar.cpp
+    src/widgets/SessionTabWidget.h
+    src/widgets/SessionTabWidget.cpp
+    src/ui/Theme.h
+    src/ui/Theme.cpp
     src/terminal/TerminalCell.h
     src/terminal/TerminalCell.cpp
     src/terminal/TerminalCursor.h

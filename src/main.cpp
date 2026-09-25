@@ -2,9 +2,11 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QPixmap>
+#include <QSettings>
 #include <QSize>
 #include <cstdio>
 #include "MainWindow.h"
+#include "ui/Theme.h"
 
 int main(int argc, char *argv[])
 {
@@ -33,6 +35,10 @@ int main(int argc, char *argv[])
                                               Qt::SmoothTransformation));
         }
     }
+
+    const QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+    Theme::instance().apply(Theme::modeFromString(
+        settings.value(QStringLiteral("global/theme"), QStringLiteral("dark")).toString()));
 
     app.setWindowIcon(appIcon);
     QApplication::setWindowIcon(appIcon);
