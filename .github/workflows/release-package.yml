@@ -90,3 +90,55 @@ jobs:
           name: CrossTerm-linux-package
           path: dist/archives/*.tar.gz
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check tag matches project version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          CMAKE_VERSION=$(sed -nE 's/^project\(CrossTerm VERSION ([0-9.]+).*/\1/p' CMakeLists.txt)
+          ISS_VERSION=$(sed -nE 's/^#define MyAppVersion "([^"]+)"/\1/p' installer/CrossTerm.iss)
+          echo "Tag: $VERSION  CMakeLists.txt: $CMAKE_VERSION  CrossTerm.iss: $ISS_VERSION"
+          if [ "$VERSION" != "$CMAKE_VERSION" ] || [ "$VERSION" != "$ISS_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the project version; bump the version before tagging."
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect release assets
+        run: |
+          mkdir release
+          cp artifacts/CrossTerm-linux-package/*.tar.gz release/
+          cp artifacts/CrossTerm-windows-installer/*.exe release/
+          cp artifacts/CrossTerm-windows-package/CrossTerm-windows-x64.zip \
+             "release/CrossTerm-${VERSION}-windows-x64.zip"
+          ls -l release
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/* --clobber
+            gh release edit "$GITHUB_REF_NAME" --latest
+          else
+            gh release create "$GITHUB_REF_NAME" release/* \
+              --title "CrossTerm ${VERSION}" \
+              --generate-notes \
+              --verify-tag \
+              --latest
+          fi
