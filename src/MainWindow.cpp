@@ -1162,37 +1162,40 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         statusBar()->showMessage(QStringLiteral("Saved commands updated for %1").arg(name), 2500);
     });
 
-    const int index = m_tabs->addTab(page, Theme::icon(Theme::IconKind::Monitor, Theme::ColorRole::MutedText),
-                                     profile.name());
+    const int index = m_tabs->addTab(page, QIcon(), profile.name());
     m_tabs->setCurrentIndex(index);
 
-    connect(connection, &IConnection::connected, page, [this, page, commandBar, profile] {
+    // The tab shows state as a status dot; the tooltip spells it out.
+    const auto setTabState = [this, page, name = profile.name()](Theme::SessionState state) {
         const int idx = m_tabs->indexOf(page);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [LIVE]"));
-            m_tabs->setTabIcon(idx, Theme::icon(Theme::IconKind::Monitor, Theme::ColorRole::Accent));
+        if (idx < 0)
+            return;
+        QString label;
+        switch (state) {
+        case Theme::SessionState::Connecting: label = QStringLiteral("connecting"); break;
+        case Theme::SessionState::Connected: label = QStringLiteral("connected"); break;
+        case Theme::SessionState::Disconnected: label = QStringLiteral("disconnected"); break;
         }
+        m_tabs->setTabIcon(idx, Theme::sessionTabIcon(state));
+        m_tabs->setTabToolTip(idx, QStringLiteral("%1 \u2014 %2").arg(name, label));
+    };
+    setTabState(Theme::SessionState::Connecting);
+
+    connect(connection, &IConnection::connected, page, [this, commandBar, profile, setTabState] {
+        setTabState(Theme::SessionState::Connected);
         commandBar->setConnected(true);
         statusBar()->showMessage(QStringLiteral("Connected: %1").arg(profile.name()), 2500);
     });
-    connect(connection, &IConnection::disconnected, page, [this, page, commandBar, profile] {
-        const int idx = m_tabs->indexOf(page);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [DOWN]"));
-            m_tabs->setTabIcon(idx, Theme::icon(Theme::IconKind::Monitor, Theme::ColorRole::Danger));
-        }
+    connect(connection, &IConnection::disconnected, page, [this, commandBar, profile, setTabState] {
+        setTabState(Theme::SessionState::Disconnected);
         commandBar->setConnected(false);
         statusBar()->showMessage(QStringLiteral("Disconnected: %1").arg(profile.name()), 2500);
     });
-    connect(terminal, &TerminalWidget::reconnectRequested, page, [this, page, connection, profile] {
+    connect(terminal, &TerminalWidget::reconnectRequested, page, [this, connection, profile, setTabState] {
         if (!connection || connection->isConnected())
             return;
 
-        const int idx = m_tabs->indexOf(page);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [RECONNECTING]") );
-            m_tabs->setTabIcon(idx, Theme::icon(Theme::IconKind::Monitor, Theme::ColorRole::MutedText));
-        }
+        setTabState(Theme::SessionState::Connecting);
         statusBar()->showMessage(QStringLiteral("Manual reconnect: %1").arg(profile.name()), 2500);
         connection->connectSession();
     });

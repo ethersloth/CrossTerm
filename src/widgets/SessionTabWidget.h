@@ -25,6 +25,7 @@ public:
     int indexOf(const QWidget *page) const;
     void setTabText(int index, const QString &text);
     void setTabIcon(int index, const QIcon &icon);
+    void setTabToolTip(int index, const QString &toolTip);
 
     QToolButton *newTabButton() const { return m_newTabButton; }
 

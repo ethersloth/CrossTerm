@@ -31,7 +31,10 @@ public:
         Hover,
         Danger,
         Success,
+        Warning,
     };
+
+    enum class SessionState { Connecting, Connected, Disconnected };
 
     enum class IconKind {
         Terminal,
@@ -67,6 +70,9 @@ public:
     static QIcon icon(IconKind kind, ColorRole role = ColorRole::Text);
     // Icon drawn in a fixed color (session colors, command accents).
     static QIcon icon(IconKind kind, const QColor &color);
+    // Wide (2:1) tab icon: monitor plus a status dot. Disconnected uses a
+    // hollow dot so the state does not rely on color alone.
+    static QIcon sessionTabIcon(SessionState state);
 
 signals:
     void changed();

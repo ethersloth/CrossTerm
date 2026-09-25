@@ -28,7 +28,7 @@ SessionTabWidget::SessionTabWidget(QWidget *parent)
     m_tabBar->setMovable(true);
     m_tabBar->setUsesScrollButtons(true);
     m_tabBar->setElideMode(Qt::ElideRight);
-    m_tabBar->setIconSize(QSize(18, 18));
+    m_tabBar->setIconSize(QSize(38, 18));
     headerLayout->addWidget(m_tabBar, 0, Qt::AlignBottom);
 
     m_newTabButton = new QToolButton(header);
@@ -125,4 +125,9 @@ void SessionTabWidget::setTabText(int index, const QString &text)
 void SessionTabWidget::setTabIcon(int index, const QIcon &icon)
 {
     m_tabBar->setTabIcon(index, icon);
+}
+
+void SessionTabWidget::setTabToolTip(int index, const QString &toolTip)
+{
+    m_tabBar->setTabToolTip(index, toolTip);
 }

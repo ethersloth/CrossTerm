@@ -32,6 +32,7 @@ struct ThemeColors {
     QColor hover;
     QColor danger;
     QColor success;
+    QColor warning;
 };
 
 const ThemeColors &colorsFor(Theme::Mode mode)
@@ -52,6 +53,7 @@ const ThemeColors &colorsFor(Theme::Mode mode)
         QColor(0x20, 0x25, 0x2d), // hover
         QColor(0xef, 0x44, 0x44), // danger
         QColor(0x22, 0xc5, 0x5e), // success
+        QColor(0xf5, 0x9e, 0x0b), // warning
     };
     static const ThemeColors light{
         QColor(0xee, 0xf0, 0xf3),
@@ -69,6 +71,7 @@ const ThemeColors &colorsFor(Theme::Mode mode)
         QColor(0xe7, 0xea, 0xef),
         QColor(0xdc, 0x26, 0x26),
         QColor(0x16, 0xa3, 0x4a),
+        QColor(0xd9, 0x77, 0x06),
     };
     return mode == Theme::Mode::Dark ? dark : light;
 }
@@ -300,6 +303,71 @@ private:
     Theme::ColorRole m_role;
     std::optional<QColor> m_fixedColor;
 };
+
+class SessionTabIconEngine final : public QIconEngine
+{
+public:
+    explicit SessionTabIconEngine(Theme::SessionState state) : m_state(state) {}
+
+    void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State) override
+    {
+        const Theme &theme = Theme::instance();
+        QColor monitor = theme.color(Theme::ColorRole::MutedText);
+        QColor dot;
+        switch (m_state) {
+        case Theme::SessionState::Connecting: dot = theme.color(Theme::ColorRole::Warning); break;
+        case Theme::SessionState::Connected: dot = theme.color(Theme::ColorRole::Success); break;
+        case Theme::SessionState::Disconnected: dot = theme.color(Theme::ColorRole::Danger); break;
+        }
+        if (mode == QIcon::Disabled) {
+            monitor.setAlphaF(0.4);
+            dot.setAlphaF(0.4);
+        }
+
+        // Monitor in the left square, dot centered in the right square.
+        const qreal side = std::min<qreal>(rect.height(), rect.width() / 2.0);
+        const qreal top = rect.y() + (rect.height() - side) / 2.0;
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->translate(rect.x(), top);
+        painter->scale(side / 24.0, side / 24.0);
+        drawIcon(*painter, Theme::IconKind::Monitor, monitor);
+
+        const QPointF center(24.0 + 14.0, 12.0);
+        if (m_state == Theme::SessionState::Disconnected) {
+            painter->setPen(QPen(dot, 2.5));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawEllipse(center, 4.75, 4.75);
+        } else {
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(dot);
+            painter->drawEllipse(center, 6.0, 6.0);
+        }
+        painter->restore();
+    }
+
+    QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override
+    {
+        return scaledPixmap(size, mode, state, 1.0);
+    }
+
+    QPixmap scaledPixmap(const QSize &size, QIcon::Mode mode, QIcon::State state, qreal scale) override
+    {
+        QPixmap pixmap(size * scale);
+        pixmap.setDevicePixelRatio(scale);
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        paint(&painter, QRect(QPoint(0, 0), size), mode, state);
+        return pixmap;
+    }
+
+    QSize actualSize(const QSize &size, QIcon::Mode, QIcon::State) override { return size; }
+    QString key() const override { return QStringLiteral("CrossTermSessionTabIcon"); }
+    QIconEngine *clone() const override { return new SessionTabIconEngine(*this); }
+
+private:
+    Theme::SessionState m_state;
+};
 }
 
 Theme &Theme::instance()
@@ -336,6 +404,7 @@ QColor Theme::color(ColorRole role) const
     case ColorRole::Hover: return c.hover;
     case ColorRole::Danger: return c.danger;
     case ColorRole::Success: return c.success;
+    case ColorRole::Warning: return c.warning;
     }
     return c.text;
 }
@@ -348,6 +417,11 @@ QIcon Theme::icon(IconKind kind, ColorRole role)
 QIcon Theme::icon(IconKind kind, const QColor &color)
 {
     return QIcon(new LineIconEngine(kind, ColorRole::Text, color));
+}
+
+QIcon Theme::sessionTabIcon(SessionState state)
+{
+    return QIcon(new SessionTabIconEngine(state));
 }
 
 void Theme::apply(Mode mode)
