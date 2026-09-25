@@ -53,7 +53,18 @@ jobs:
           if-no-files-found: error
 
   build-linux:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+            qt-host: linux
+            qt-arch: linux_gcc_64
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            qt-host: linux_arm64
+            qt-arch: linux_gcc_arm64
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout
@@ -63,8 +74,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: "6.8.3"
-          host: "linux"
+          host: ${{ matrix.qt-host }}
           target: "desktop"
+          arch: ${{ matrix.qt-arch }}
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential ninja-build
@@ -72,13 +84,18 @@ jobs:
       - name: Build and package
         run: bash build_linux.sh
 
+      - name: Check binary architecture
+        run: |
+          file dist/linux/bin/CrossTerm
+          file dist/linux/bin/CrossTerm | grep -q "${{ matrix.arch == 'aarch64' && 'ARM aarch64' || 'x86-64' }}"
+
       - name: Create versioned tarball
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if [ "$VERSION" = "$GITHUB_REF_NAME" ]; then
             VERSION="dev"
           fi
-          PKG_NAME="CrossTerm-${VERSION}-linux-x86_64"
+          PKG_NAME="CrossTerm-${VERSION}-linux-${{ matrix.arch }}"
           mkdir -p "/tmp/$PKG_NAME"
           cp -r dist/linux/* "/tmp/$PKG_NAME/"
           mkdir -p dist/archives
@@ -87,7 +104,7 @@ jobs:
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
         with:
-          name: CrossTerm-linux-package
+          name: CrossTerm-linux-package-${{ matrix.arch }}
           path: dist/archives/*.tar.gz
           if-no-files-found: error
 
@@ -122,7 +139,7 @@ jobs:
       - name: Collect release assets
         run: |
           mkdir release
-          cp artifacts/CrossTerm-linux-package/*.tar.gz release/
+          cp artifacts/CrossTerm-linux-package-*/*.tar.gz release/
           cp artifacts/CrossTerm-windows-installer/*.exe release/
           cp artifacts/CrossTerm-windows-package/CrossTerm-windows-x64.zip \
              "release/CrossTerm-${VERSION}-windows-x64.zip"
