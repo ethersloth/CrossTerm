@@ -1,4 +1,4 @@
-# CrossTerm 0.7.3
+# CrossTerm 0.7.4
 
 CrossTerm is a Qt 6 desktop terminal and connection manager for Windows and Linux, built with C++20 and CMake.
 
@@ -160,7 +160,7 @@ builds CrossTerm on a clean `windows-2022` GitHub Actions runner, executes `buil
 The workflow can be started by:
 
 - Manually running **Windows Package** from the repository's **Actions** tab
-- Pushing a version tag such as `v0.7.3`, if tag-triggered builds are enabled in the workflow
+- Pushing a version tag such as `v0.7.4`, if tag-triggered builds are enabled in the workflow
 
 The resulting workflow artifact is:
 
@@ -186,10 +186,10 @@ The installer is created under:
 dist\installer\
 ```
 
-For CrossTerm 0.7.3, the expected installer is:
+For CrossTerm 0.7.4, the expected installer is:
 
 ```text
-dist\installer\CrossTerm-0.7.3-windows-x64-setup.exe
+dist\installer\CrossTerm-0.7.4-windows-x64-setup.exe
 ```
 
 The installer deploys the complete CrossTerm runtime package under:
@@ -220,6 +220,8 @@ Run CrossTerm with:
 ```bash
 ./dist/linux/bin/CrossTerm
 ```
+
+Prebuilt Linux packages are attached to each GitHub release for `x86_64` and `aarch64`. They use the system Qt libraries, so install Qt 6.8 or newer first (on Fedora: `sudo dnf install qt6-qtbase`), then extract the tarball for your architecture and run `./install_linux.sh`.
 
 Linux packaging has not yet received the same level of end-to-end validation as the Windows package.
 

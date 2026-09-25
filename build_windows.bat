@@ -19,7 +19,7 @@ rem already available in the current environment.
 rem ============================================================================
 
 set "APP_NAME=CrossTerm"
-set "APP_VERSION=0.7.3"
+set "APP_VERSION=0.7.4"
 
 set "PROJECT_DIR=%~dp0"
 if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
