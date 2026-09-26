@@ -511,6 +511,15 @@ QCheckBox::indicator {
 QCheckBox::indicator:hover { border-color: @accent; }
 QCheckBox::indicator:checked { background: @accent; border-color: @accent; image: url(:/icons/assets/check.png); }
 QCheckBox::indicator:disabled { border-color: @border; background: @raised; }
+QRadioButton::indicator {
+    width: 14px; height: 14px; border: 1px solid @mutedText; border-radius: 8px; background: @input;
+}
+QRadioButton::indicator:hover { border-color: @accent; }
+QRadioButton::indicator:checked {
+    border-color: @accent;
+    background: qradialgradient(cx: 0.5, cy: 0.5, radius: 0.5, fx: 0.5, fy: 0.5,
+                                stop: 0 @accentText, stop: 0.38 @accentText, stop: 0.46 @accent, stop: 1 @accent);
+}
 QLineEdit:disabled { color: @mutedText; }
 
 QPushButton {

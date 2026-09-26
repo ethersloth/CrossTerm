@@ -2,6 +2,8 @@
 
 #include <QMainWindow>
 
+#include <memory>
+
 class QTreeWidget;
 class QDockWidget;
 class SessionTabWidget;
@@ -10,6 +12,7 @@ class QTreeWidgetItem;
 class QLineEdit;
 class QMenu;
 class ProfileManager;
+class SecretStore;
 class ConnectionProfile;
 
 class MainWindow final : public QMainWindow
@@ -53,4 +56,5 @@ private:
     QDockWidget *m_sessionsDock = nullptr;
     QMenu *m_savedCommandsMenu = nullptr;
     ProfileManager *m_profileManager = nullptr;
+    std::unique_ptr<SecretStore> m_secretStore;
 };

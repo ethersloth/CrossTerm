@@ -1,4 +1,5 @@
 #include "ProfileManager.h"
+#include "SecretStore.h"
 
 #include <QStandardPaths>
 #include <QDir>
@@ -6,6 +7,13 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+
+namespace {
+const QString kPasswordProperty = QStringLiteral("ssh_password");
+// Written instead of the password when it lives in the secret store.
+const QString kPasswordStoreProperty = QStringLiteral("ssh_password_store");
+const QString kPasswordStoreKeychain = QStringLiteral("keychain");
+}
 
 ProfileManager::ProfileManager()
 {
@@ -182,6 +190,39 @@ bool ProfileManager::loadProfiles()
         }
     }
 
+    m_storedSecrets.clear();
+    m_unreadableSecrets.clear();
+    m_secretWarning.clear();
+    const bool storeAvailable = m_secretStore && m_secretStore->isAvailable();
+    bool hasPlainTextPasswords = false;
+    for (auto &profile : m_profiles) {
+        if (profile.property(kPasswordStoreProperty) != kPasswordStoreKeychain) {
+            hasPlainTextPasswords = hasPlainTextPasswords || !profile.sshPassword().isEmpty();
+            continue;
+        }
+        const std::optional<QString> secret =
+            storeAvailable ? m_secretStore->read(profile.name()) : std::nullopt;
+        if (!secret) {
+            // Keep the marker so the entry is neither lost nor deleted.
+            m_unreadableSecrets.insert(profile.name());
+            continue;
+        }
+        QMap<QString, QString> props = profile.allProperties();
+        props.remove(kPasswordStoreProperty);
+        props.insert(kPasswordProperty, *secret);
+        profile.setAllProperties(props);
+        m_storedSecrets.insert(profile.name(), *secret);
+    }
+    if (!m_unreadableSecrets.isEmpty()) {
+        m_secretWarning = QStringLiteral("Could not read saved passwords for %1 session(s) from the system keychain. "
+                                         "Those sessions will ask for a password.")
+                              .arg(m_unreadableSecrets.size());
+    }
+
+    // First run with a keychain: move plain-text passwords out of the file.
+    if (storeAvailable && hasPlainTextPasswords)
+        saveProfiles();
+
     return true;
 }
 
@@ -194,9 +235,49 @@ bool ProfileManager::saveProfiles()
             return false;
     }
 
+    const bool storeAvailable = m_secretStore && m_secretStore->isAvailable();
+    int plainTextFallbacks = 0;
+    QSet<QString> stillStored;
+
     QJsonArray profilesArray;
     for (const auto &profile : m_profiles) {
-        profilesArray.append(profile.toJson());
+        QJsonObject json = profile.toJson();
+        const QString password = profile.sshPassword();
+        if (storeAvailable && !password.isEmpty()) {
+            const auto stored = m_storedSecrets.constFind(profile.name());
+            const bool upToDate = stored != m_storedSecrets.constEnd() && *stored == password;
+            if (upToDate || m_secretStore->write(profile.name(), password)) {
+                m_storedSecrets.insert(profile.name(), password);
+                m_unreadableSecrets.remove(profile.name());
+                stillStored.insert(profile.name());
+                QJsonObject props = json[QStringLiteral("properties")].toObject();
+                props.remove(kPasswordProperty);
+                props.insert(kPasswordStoreProperty, kPasswordStoreKeychain);
+                json[QStringLiteral("properties")] = props;
+            } else {
+                ++plainTextFallbacks;
+            }
+        }
+        profilesArray.append(json);
+    }
+
+    // Drop keychain entries for sessions that were deleted, renamed, or had
+    // their password cleared.
+    if (storeAvailable) {
+        for (auto it = m_storedSecrets.begin(); it != m_storedSecrets.end();) {
+            if (!stillStored.contains(it.key()) && m_secretStore->remove(it.key()))
+                it = m_storedSecrets.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    if (plainTextFallbacks > 0) {
+        m_secretWarning = QStringLiteral("Could not save %1 password(s) to %2; they were kept in the profiles file instead.")
+                              .arg(plainTextFallbacks)
+                              .arg(m_secretStore->name());
+    } else if (m_unreadableSecrets.isEmpty()) {
+        m_secretWarning.clear();
     }
 
     QJsonArray foldersArray;
@@ -210,14 +291,17 @@ bool ProfileManager::saveProfiles()
 
     QJsonDocument doc(root);
 
+    // Owner-only: the file can still hold passwords when no keychain is available.
     QFile file(m_profilesPath);
-    if (!file.open(QIODevice::WriteOnly))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
         return false;
+    file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
 
-    file.write(doc.toJson());
+    const QByteArray data = doc.toJson();
+    const bool written = file.write(data) == data.size();
     file.close();
 
-    return true;
+    return written;
 }
 
 QString ProfileManager::getDefaultProfilesPath() const

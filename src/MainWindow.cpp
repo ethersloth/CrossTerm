@@ -4,6 +4,8 @@
 #include "widgets/TerminalWidget.h"
 #include "profiles/ProfileManager.h"
 #include "profiles/ConnectionProfile.h"
+#include "profiles/SecretStore.h"
+#include "dialogs/BackupDialogs.h"
 #include "dialogs/NewSessionDialog.h"
 #include "ui/Theme.h"
 #include "widgets/CommandBar.h"
@@ -145,19 +147,22 @@ protected:
 }
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_profileManager(new ProfileManager())
+    : QMainWindow(parent), m_profileManager(new ProfileManager()), m_secretStore(SecretStore::createSystemStore())
 {
     setWindowTitle(QStringLiteral("CrossTerm 0.7.4"));
     resize(1200, 760);
 
-    // Load saved profiles
+    // Load saved profiles; passwords come from the OS keychain when one is available.
+    m_profileManager->setSecretStore(m_secretStore.get());
     m_profileManager->loadProfiles();
 
     buildUi();
     buildMenus();
     populateSessions();
 
-    statusBar()->showMessage(QStringLiteral("Ready"));
+    const QString secretWarning = m_profileManager->secretStorageWarning();
+    statusBar()->showMessage(secretWarning.isEmpty() ? QStringLiteral("Ready") : secretWarning,
+                             secretWarning.isEmpty() ? 0 : 15000);
 }
 
 MainWindow::~MainWindow()
@@ -306,6 +311,23 @@ void MainWindow::buildMenus()
     auto *close = fileMenu->addAction(QStringLiteral("&Close Tab"));
     close->setShortcut(QKeySequence::Close);
     connect(close, &QAction::triggered, this, &MainWindow::closeCurrentTab);
+
+    fileMenu->addSeparator();
+    auto *exportBackup = fileMenu->addAction(QStringLiteral("&Export Backup..."));
+    connect(exportBackup, &QAction::triggered, this, [this] {
+        BackupDialogs::exportBackup(this, *m_profileManager);
+    });
+    auto *importBackup = fileMenu->addAction(QStringLiteral("&Import Backup..."));
+    connect(importBackup, &QAction::triggered, this, [this] {
+        if (!BackupDialogs::importBackup(this, *m_profileManager))
+            return;
+        const QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+        Theme::instance().apply(Theme::modeFromString(
+            settings.value(QStringLiteral("global/theme"), QStringLiteral("dark")).toString()));
+        for (const auto &profile : m_profileManager->allProfiles())
+            refreshSavedCommands(profile.name(), profile.savedCommands());
+        populateSessions();
+    });
 
     fileMenu->addSeparator();
     auto *quit = fileMenu->addAction(QStringLiteral("E&xit"));
