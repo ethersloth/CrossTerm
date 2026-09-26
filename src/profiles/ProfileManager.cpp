@@ -291,11 +291,18 @@ bool ProfileManager::saveProfiles()
 
     QJsonDocument doc(root);
 
-    // Owner-only: the file can still hold passwords when no keychain is available.
+    // Owner-only on Unix: the file can still hold passwords when no keychain
+    // is available. On Windows it inherits the per-user AppData ACL; Qt's
+    // permission bits produce a misleading ACL there (see PrivateKeyPermissions.h).
     QFile file(m_profilesPath);
+#ifdef Q_OS_WIN
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+#else
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
         return false;
     file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+#endif
 
     const QByteArray data = doc.toJson();
     const bool written = file.write(data) == data.size();

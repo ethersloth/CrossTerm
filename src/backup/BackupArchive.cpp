@@ -1,5 +1,6 @@
 #include "BackupArchive.h"
 #include "../profiles/ProfileManager.h"
+#include "../security/PrivateKeyPermissions.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -54,17 +55,39 @@ QString uniqueKeyPath(const QDir &dir, const QString &fileName, const QByteArray
     }
 }
 
-bool writePrivateFile(const QString &path, const QByteArray &data, QFileDevice::Permissions permissions)
+// Opens for writing. On Unix the file is created with `unixMode` so a key
+// is never briefly world-readable. On Windows Qt's permission bits must not
+// be used (see PrivateKeyPermissions.h); the file inherits the secured key
+// folder's ACL until PrivateKeyPermissions::secureFile() locks it down.
+bool openForWrite(QFile &file, QIODevice::OpenMode mode, QFileDevice::Permissions unixMode)
+{
+#ifdef Q_OS_WIN
+    Q_UNUSED(unixMode);
+    return file.open(mode);
+#else
+    return file.open(mode, unixMode);
+#endif
+}
+
+bool writeFile(const QString &path, const QByteArray &data, QFileDevice::Permissions unixMode)
 {
     QFile file(path);
-    // Created with the final permissions so the key is never world-readable,
-    // even briefly. Windows ignores these bits; the per-user data folder's
-    // ACL applies there.
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate, permissions))
+    if (!openForWrite(file, QIODevice::WriteOnly | QIODevice::Truncate, unixMode))
         return false;
-    const bool ok = file.write(data) == data.size();
-    file.setPermissions(permissions);
-    return ok;
+    return file.write(data) == data.size();
+}
+
+QString keySecuringError(const QString &path, const QString &details)
+{
+#ifdef Q_OS_WIN
+    const QString sshName = QStringLiteral("Windows OpenSSH");
+#else
+    const QString sshName = QStringLiteral("OpenSSH");
+#endif
+    return QStringLiteral("CrossTerm could not secure the private key for %1.\n\nKey:\n%2\n\n"
+                          "Its file permissions could not be restricted to the current user, so it was not "
+                          "imported. Your sessions and settings were not changed.\n\nDetails: %3")
+        .arg(sshName, QDir::toNativeSeparators(path), details);
 }
 
 QList<QByteArray> knownHostLines(const QByteArray &data)
@@ -89,8 +112,10 @@ int mergeKnownHosts(const QString &path, const QByteArray &incoming)
     if (!info.dir().exists()) {
         if (!QDir().mkpath(info.absolutePath()))
             return -1;
+#ifndef Q_OS_WIN
         QFile::setPermissions(info.absolutePath(),
                               QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+#endif
     }
 
     QByteArray existing;
@@ -118,13 +143,10 @@ int mergeKnownHosts(const QString &path, const QByteArray &incoming)
     if (!existing.isEmpty() && !existing.endsWith('\n'))
         toAppend.prepend('\n');
 
-    const bool created = !file.exists();
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Append, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
+    if (!openForWrite(file, QIODevice::WriteOnly | QIODevice::Append, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
         return -1;
     if (file.write(toAppend) != toAppend.size())
         return -1;
-    if (created)
-        file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     return added;
 }
 
@@ -318,22 +340,33 @@ ImportResult apply(const Contents &contents, ProfileManager &profiles, QSettings
     QHash<QString, QString> restoredKeyPaths;
     if (!contents.keyFiles.isEmpty()) {
         QDir dir(keyDirectory);
-        if (!dir.mkpath(QStringLiteral("."))) {
-            result.error = QStringLiteral("Could not create the key folder %1. Nothing was changed.").arg(keyDirectory);
+        QString securityError;
+        if (!dir.mkpath(QStringLiteral("."))
+            || !PrivateKeyPermissions::secureDirectory(dir.absolutePath(), &securityError)) {
+            result.error = QStringLiteral("Could not create a private folder for keys at %1. Nothing was changed.")
+                               .arg(QDir::toNativeSeparators(keyDirectory));
+            if (!securityError.isEmpty())
+                result.error += QStringLiteral("\n\nDetails: ") + securityError;
             return result;
         }
-        QFile::setPermissions(dir.absolutePath(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 
         for (const auto &key : contents.keyFiles) {
             const QString path = uniqueKeyPath(dir, key.fileName, key.data);
-            if (!writePrivateFile(path, key.data, QFileDevice::ReadOwner | QFileDevice::WriteOwner)) {
-                result.error = QStringLiteral("Could not write the key file %1. Your sessions and settings were not changed.").arg(path);
+            if (!writeFile(path, key.data, QFileDevice::ReadOwner | QFileDevice::WriteOwner)) {
+                result.error = QStringLiteral("Could not write the key file %1. Your sessions and settings were not changed.")
+                                   .arg(QDir::toNativeSeparators(path));
+                return result;
+            }
+            // Lock the key down now, not when ssh first complains about it.
+            if (!PrivateKeyPermissions::secureFile(path, &securityError)) {
+                QFile::remove(path);
+                result.error = keySecuringError(path, securityError);
                 return result;
             }
             if (!key.publicData.isEmpty()) {
-                writePrivateFile(path + QStringLiteral(".pub"), key.publicData,
-                                 QFileDevice::ReadOwner | QFileDevice::WriteOwner
-                                     | QFileDevice::ReadGroup | QFileDevice::ReadOther);
+                writeFile(path + QStringLiteral(".pub"), key.publicData,
+                          QFileDevice::ReadOwner | QFileDevice::WriteOwner
+                              | QFileDevice::ReadGroup | QFileDevice::ReadOther);
             }
             restoredKeyPaths.insert(key.originalPath, QDir::fromNativeSeparators(path));
             ++result.keysRestored;

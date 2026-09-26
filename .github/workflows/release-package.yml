@@ -36,6 +36,15 @@ jobs:
         run: |
           call build_installer.bat
 
+      - name: Run tests
+        shell: pwsh
+        run: |
+          foreach ($test in "TerminalParserTest", "BackupTest", "KeyPermissionsTest") {
+            Write-Host "=== $test"
+            & ".\build-windows\$test.exe"
+            if ($LASTEXITCODE -ne 0) { throw "$test failed with exit code $LASTEXITCODE" }
+          }
+
       - name: Upload packaged app
         uses: actions/upload-artifact@v4
         with:
@@ -83,6 +92,13 @@ jobs:
 
       - name: Build and package
         run: bash build_linux.sh
+
+      - name: Run tests
+        run: |
+          for test in TerminalParserTest BackupTest KeyPermissionsTest; do
+            echo "=== $test"
+            "./build-linux/$test"
+          done
 
       - name: Check binary architecture
         run: |

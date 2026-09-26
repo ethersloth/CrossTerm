@@ -2,6 +2,7 @@
 #include "../backup/BackupArchive.h"
 #include "../backup/BackupCrypto.h"
 #include "../profiles/ProfileManager.h"
+#include "../security/PrivateKeyPermissions.h"
 
 #include <QApplication>
 #include <QButtonGroup>
@@ -279,8 +280,7 @@ bool importBackup(QWidget *parent, ProfileManager &profiles)
         return false;
 
     const auto mode = replace->isChecked() ? BackupArchive::ImportMode::Replace : BackupArchive::ImportMode::Merge;
-    const QString keyDirectory = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-                                 + QStringLiteral("/keys");
+    const QString keyDirectory = PrivateKeyPermissions::keyDirectory();
     QSettings settings = appSettings();
     const BackupArchive::ImportResult result = BackupArchive::apply(*contents, profiles, settings, mode, keyDirectory);
 

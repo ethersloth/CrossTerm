@@ -140,6 +140,8 @@ qt_add_executable(CrossTerm
     src/backup/BackupCrypto.cpp
     src/backup/BackupArchive.h
     src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.h
+    src/security/PrivateKeyPermissions.cpp
 )
 
 add_executable(TerminalParserTest
@@ -156,10 +158,24 @@ add_executable(BackupTest
     tests/BackupTest.cpp
     src/backup/BackupCrypto.cpp
     src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.cpp
     src/profiles/ConnectionProfile.cpp
     src/profiles/ProfileManager.cpp
 )
 target_link_libraries(BackupTest PRIVATE Qt6::Core CrossTermMonocypher)
+
+add_executable(KeyPermissionsTest
+    tests/KeyPermissionsTest.cpp
+    src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.cpp
+    src/profiles/ConnectionProfile.cpp
+    src/profiles/ProfileManager.cpp
+)
+target_link_libraries(KeyPermissionsTest PRIVATE Qt6::Core)
+if(WIN32)
+    target_link_libraries(BackupTest PRIVATE advapi32)
+    target_link_libraries(KeyPermissionsTest PRIVATE advapi32)
+endif()
 target_link_libraries(CrossTerm PRIVATE
     Qt6::Core
     Qt6::Gui

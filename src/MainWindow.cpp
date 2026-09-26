@@ -5,6 +5,8 @@
 #include "profiles/ProfileManager.h"
 #include "profiles/ConnectionProfile.h"
 #include "profiles/SecretStore.h"
+#include "backup/BackupArchive.h"
+#include "security/PrivateKeyPermissions.h"
 #include "dialogs/BackupDialogs.h"
 #include "dialogs/NewSessionDialog.h"
 #include "ui/Theme.h"
@@ -1123,7 +1125,26 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         connection = new LocalShellConnection(terminal);
         break;
 
-    case ConnectionProfile::ConnectionType::SSH:
+    case ConnectionProfile::ConnectionType::SSH: {
+        // Keys CrossTerm restored itself are re-secured before every launch,
+        // which also repairs ones imported by 0.7.5 with ACLs Windows OpenSSH
+        // rejects. Keys elsewhere belong to the user and are left alone.
+        const QString keyPath = BackupArchive::expandHome(profile.sshPrivateKey().trimmed());
+        if (!keyPath.isEmpty() && QFileInfo::exists(keyPath) && PrivateKeyPermissions::isInKeyDirectory(keyPath)) {
+            QString details;
+            if (!PrivateKeyPermissions::isSecure(keyPath, &details)
+                && !PrivateKeyPermissions::secureFile(keyPath, &details)) {
+                qWarning("Could not secure private key %s: %s", qPrintable(keyPath), qPrintable(details));
+                QMessageBox::critical(this, QStringLiteral("Private Key Not Secured"),
+                                      QStringLiteral("CrossTerm could not secure the private key for OpenSSH.\n\n"
+                                                     "Key:\n%1\n\n"
+                                                     "The key was not used because its file permissions could not be "
+                                                     "restricted to the current user.\n\nDetails: %2")
+                                          .arg(QDir::toNativeSeparators(keyPath), details));
+                terminal->deleteLater();
+                return;
+            }
+        }
         connection = new SshConnection(profile.sshHost(),
                                        profile.sshPort(),
                                        profile.sshUsername(),
@@ -1131,6 +1152,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
                                        profile.sshPassword(),
                                        terminal);
         break;
+    }
 
     case ConnectionProfile::ConnectionType::Serial:
         // TODO: Implement Serial connection
