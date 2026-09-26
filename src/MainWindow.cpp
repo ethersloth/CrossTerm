@@ -151,7 +151,7 @@ protected:
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_profileManager(new ProfileManager()), m_secretStore(SecretStore::createSystemStore())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.7.5"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.7.6"));
     resize(1200, 760);
 
     // Load saved profiles; passwords come from the OS keychain when one is available.
@@ -379,7 +379,7 @@ void MainWindow::buildMenus()
     connect(about, &QAction::triggered, this, [this] {
         QMessageBox::about(this,
                            QStringLiteral("About CrossTerm"),
-                           QStringLiteral("CrossTerm 0.7.5\n\n"
+                           QStringLiteral("CrossTerm 0.7.6\n\n"
                                           "A cross-platform terminal and connection manager built with C++20 and Qt 6.\n\n"
                                           "Features:\n"
                                           "• VT100 Terminal Emulation\n"
@@ -1127,7 +1127,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
 
     case ConnectionProfile::ConnectionType::SSH: {
         // Keys CrossTerm restored itself are re-secured before every launch,
-        // which also repairs ones imported by 0.7.5 with ACLs Windows OpenSSH
+        // which also repairs ones imported by 0.7.6 with ACLs Windows OpenSSH
         // rejects. Keys elsewhere belong to the user and are left alone.
         const QString keyPath = BackupArchive::expandHome(profile.sshPrivateKey().trimmed());
         if (!keyPath.isEmpty() && QFileInfo::exists(keyPath) && PrivateKeyPermissions::isInKeyDirectory(keyPath)) {
