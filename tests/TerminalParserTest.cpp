@@ -1,3 +1,5 @@
+// assert() is the check mechanism here, so keep it active in Release builds.
+#undef NDEBUG
 #include <cassert>
 
 #include "../src/profiles/ConnectionProfile.h"
@@ -11,8 +13,10 @@ int main()
 
         parser.processBytes(QByteArray("AB\nC"));
 
+        // LF moves down without returning to column 0; "C" lands at column 2
+        // and the cursor advances past it.
         assert(screen.cursor().row == 1);
-        assert(screen.cursor().column == 2);
+        assert(screen.cursor().column == 3);
         assert(screen.cellAt(0, 0).character == QChar('A'));
         assert(screen.cellAt(0, 1).character == QChar('B'));
         assert(screen.cellAt(1, 2).character == QChar('C'));
