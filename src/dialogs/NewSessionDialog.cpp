@@ -36,10 +36,15 @@ ConnectionProfile NewSessionDialog::createProfile() const
 {
     int typeIndex = m_connectionTypeCombo->currentIndex();
     auto type = static_cast<ConnectionProfile::ConnectionType>(typeIndex);
-    
-    ConnectionProfile profile(m_profileName->text().isEmpty() ? 
-                             QStringLiteral("New Session") : m_profileName->text(), 
-                             type);
+
+    ConnectionProfile profile;
+    if (m_profileCombo->currentIndex() > 0
+        && m_profileManager.hasProfile(m_profileCombo->currentText())) {
+        profile = m_profileManager.profile(m_profileCombo->currentText());
+    }
+    profile.setName(m_profileName->text().isEmpty()
+                        ? QStringLiteral("New Session") : m_profileName->text());
+    profile.setType(type);
 
     profile.setProperty(QStringLiteral("terminal_type"), m_terminalTypeCombo ? m_terminalTypeCombo->currentText() : QStringLiteral("xterm"));
     profile.setProperty(QStringLiteral("scrollback_lines"), m_scrollbackSpin ? QString::number(m_scrollbackSpin->value()) : QStringLiteral("10000"));
@@ -83,6 +88,13 @@ ConnectionProfile NewSessionDialog::createProfile() const
     profile.setProperty(QStringLiteral("session_log_path"), m_logPathEdit->text().trimmed());
     profile.setDownloadDirectory(m_downloadDirectoryEdit->text().trimmed());
 
+    QList<QPair<QString, QString>> savedCommands;
+    for (int index = 0; m_savedCommandList && index < m_savedCommandList->count(); ++index) {
+        const QListWidgetItem *item = m_savedCommandList->item(index);
+        savedCommands.append(qMakePair(item->text(), item->data(Qt::UserRole).toString()));
+    }
+    profile.setSavedCommands(savedCommands);
+
     return profile;
 }
 
@@ -115,6 +127,7 @@ void NewSessionDialog::buildUi()
     m_categoryList->setFixedWidth(220);
     m_categoryList->setAlternatingRowColors(false);
     m_categoryList->addItem(QStringLiteral("Connection"));
+    m_categoryList->addItem(QStringLiteral("Commands"));
     m_categoryList->addItem(QStringLiteral("Port Forwarding"));
     m_categoryList->addItem(QStringLiteral("Terminal"));
     m_categoryList->addItem(QStringLiteral("Appearance"));
@@ -302,6 +315,64 @@ void NewSessionDialog::buildCategoryPages()
             m_downloadDirectoryEdit->setText(directory);
     });
     m_optionsStack->addWidget(connectionPage);
+
+    auto *commandsPage = new QWidget(this);
+    auto *commandsLayout = new QFormLayout(commandsPage);
+    commandsLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_savedCommandList = new QListWidget(this);
+    m_savedCommandList->setMinimumHeight(180);
+    commandsLayout->addRow(QStringLiteral("Saved commands:"), m_savedCommandList);
+
+    m_savedCommandName = new QLineEdit(this);
+    m_savedCommandName->setPlaceholderText(QStringLiteral("Update Fedora"));
+    commandsLayout->addRow(QStringLiteral("Name:"), m_savedCommandName);
+
+    m_savedCommandText = new QLineEdit(this);
+    m_savedCommandText->setPlaceholderText(
+        QStringLiteral("sudo dnf -y update && sudo dnf -y upgrade && sudo reboot now"));
+    commandsLayout->addRow(QStringLiteral("Command:"), m_savedCommandText);
+
+    auto *commandButtons = new QHBoxLayout();
+    auto *addCommandButton = new QPushButton(QStringLiteral("Add / Update"), this);
+    auto *removeCommandButton = new QPushButton(QStringLiteral("Remove"), this);
+    commandButtons->addWidget(addCommandButton);
+    commandButtons->addWidget(removeCommandButton);
+    commandButtons->addStretch();
+    commandsLayout->addRow(commandButtons);
+
+    connect(m_savedCommandList, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current) {
+        if (!current)
+            return;
+        m_savedCommandName->setText(current->text());
+        m_savedCommandText->setText(current->data(Qt::UserRole).toString());
+    });
+    connect(addCommandButton, &QPushButton::clicked, this, [this]() {
+        const QString name = m_savedCommandName->text().trimmed();
+        const QString command = m_savedCommandText->text().trimmed();
+        if (name.isEmpty() || command.isEmpty()) {
+            QMessageBox::warning(this, QStringLiteral("Saved Command"),
+                                 QStringLiteral("Enter both a name and a command."));
+            return;
+        }
+
+        QListWidgetItem *item = m_savedCommandList->currentItem();
+        if (!item) {
+            const auto matches = m_savedCommandList->findItems(name, Qt::MatchExactly);
+            item = matches.isEmpty() ? new QListWidgetItem(m_savedCommandList) : matches.first();
+        }
+        item->setText(name);
+        item->setData(Qt::UserRole, command);
+        item->setToolTip(command);
+        m_savedCommandList->setCurrentItem(item);
+    });
+    connect(removeCommandButton, &QPushButton::clicked, this, [this]() {
+        delete m_savedCommandList->takeItem(m_savedCommandList->currentRow());
+        m_savedCommandName->clear();
+        m_savedCommandText->clear();
+    });
+    m_optionsStack->addWidget(commandsPage);
 
     auto *forwardPage = new QWidget(this);
     auto *forwardLayout = new QFormLayout(forwardPage);
@@ -566,6 +637,17 @@ void NewSessionDialog::loadProfileIntoUI(const ConnectionProfile &profile)
 {
     m_connectionTypeCombo->setCurrentIndex(static_cast<int>(profile.type()));
     m_profileName->setText(profile.name());
+
+    if (m_savedCommandList) {
+        m_savedCommandList->clear();
+        for (const auto &[name, command] : profile.savedCommands()) {
+            auto *item = new QListWidgetItem(name, m_savedCommandList);
+            item->setData(Qt::UserRole, command);
+            item->setToolTip(command);
+        }
+        m_savedCommandName->clear();
+        m_savedCommandText->clear();
+    }
 
     if (m_terminalTypeCombo) {
         const QString terminalType = profile.terminalType();

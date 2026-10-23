@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(CrossTerm VERSION 0.6.1 LANGUAGES CXX C)
+project(CrossTerm VERSION 0.7.6 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,6 +9,10 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets)
+if(UNIX AND NOT APPLE)
+    # Secret Service (GNOME Keyring / KWallet) for saved SSH passwords.
+    find_package(Qt6 6.4 REQUIRED COMPONENTS DBus)
+endif()
 
 if(WIN32)
     # The vendored lrzsz sources use old K&R-style implicit function
@@ -87,6 +91,10 @@ if(WIN32)
     set_target_properties(CrossTermRz PROPERTIES OUTPUT_NAME rz)
 endif()
 
+# Monocypher: Argon2id + XChaCha20-Poly1305 for encrypted backups.
+add_library(CrossTermMonocypher STATIC third_party/monocypher/monocypher.c)
+target_include_directories(CrossTermMonocypher PUBLIC third_party/monocypher)
+
 qt_add_executable(CrossTerm
     src/main.cpp
     resources.qrc
@@ -101,6 +109,12 @@ qt_add_executable(CrossTerm
     src/connections/SshConnection.cpp
     src/widgets/TerminalWidget.h
     src/widgets/TerminalWidget.cpp
+    src/widgets/CommandBar.h
+    src/widgets/CommandBar.cpp
+    src/widgets/SessionTabWidget.h
+    src/widgets/SessionTabWidget.cpp
+    src/ui/Theme.h
+    src/ui/Theme.cpp
     src/terminal/TerminalCell.h
     src/terminal/TerminalCell.cpp
     src/terminal/TerminalCursor.h
@@ -116,8 +130,18 @@ qt_add_executable(CrossTerm
     src/profiles/ConnectionProfile.cpp
     src/profiles/ProfileManager.h
     src/profiles/ProfileManager.cpp
+    src/profiles/SecretStore.h
+    src/profiles/SecretStore.cpp
     src/dialogs/NewSessionDialog.h
     src/dialogs/NewSessionDialog.cpp
+    src/dialogs/BackupDialogs.h
+    src/dialogs/BackupDialogs.cpp
+    src/backup/BackupCrypto.h
+    src/backup/BackupCrypto.cpp
+    src/backup/BackupArchive.h
+    src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.h
+    src/security/PrivateKeyPermissions.cpp
 )
 
 add_executable(TerminalParserTest
@@ -125,16 +149,43 @@ add_executable(TerminalParserTest
     src/terminal/TerminalCell.cpp
     src/terminal/TerminalScreen.cpp
     src/terminal/TerminalParser.cpp
+    src/profiles/ConnectionProfile.cpp
 )
 
 target_include_directories(TerminalParserTest PRIVATE src)
+
+add_executable(BackupTest
+    tests/BackupTest.cpp
+    src/backup/BackupCrypto.cpp
+    src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.cpp
+    src/profiles/ConnectionProfile.cpp
+    src/profiles/ProfileManager.cpp
+)
+target_link_libraries(BackupTest PRIVATE Qt6::Core CrossTermMonocypher)
+
+add_executable(KeyPermissionsTest
+    tests/KeyPermissionsTest.cpp
+    src/backup/BackupArchive.cpp
+    src/security/PrivateKeyPermissions.cpp
+    src/profiles/ConnectionProfile.cpp
+    src/profiles/ProfileManager.cpp
+)
+target_link_libraries(KeyPermissionsTest PRIVATE Qt6::Core)
+if(WIN32)
+    target_link_libraries(BackupTest PRIVATE advapi32)
+    target_link_libraries(KeyPermissionsTest PRIVATE advapi32)
+endif()
 target_link_libraries(CrossTerm PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    CrossTermMonocypher
 )
 if(WIN32)
-    target_link_libraries(CrossTerm PRIVATE CrossTermLrzszSender)
+    target_link_libraries(CrossTerm PRIVATE CrossTermLrzszSender advapi32)
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(CrossTerm PRIVATE Qt6::DBus)
 endif()
 target_link_libraries(TerminalParserTest PRIVATE
     Qt6::Core

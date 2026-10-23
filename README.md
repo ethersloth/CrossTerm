@@ -1,4 +1,4 @@
-# CrossTerm 0.6.1
+# CrossTerm 0.7.6
 
 CrossTerm is a Qt 6 desktop terminal and connection manager for Windows and Linux, built with C++20 and CMake.
 
@@ -11,6 +11,7 @@ It provides saved connection profiles, tabbed sessions, local shells, SSH sessio
 - Local shell and SSH sessions backed by Windows ConPTY
 - Tabbed terminal workspace with a dockable session tree
 - Saved connection profiles for local shell and SSH connections
+- Named commands saved per connection profile and run from the active session
 - SSH host, port, username, and private-key configuration
 - Per-profile fonts, terminal settings, appearance options, and session logging
 - ZModem uploads and downloads over SSH using `rz` and `sz`
@@ -29,6 +30,13 @@ It provides saved connection profiles, tabbed sessions, local shells, SSH sessio
 
 3. Create or load an SSH profile under **Session**.
 4. Connect and use the terminal normally.
+
+### Saved Commands
+
+Open a session profile's **Commands** page to add named commands. Once that
+profile is connected, choose the command from **Session > Saved Commands** to
+send it to the active terminal and execute it. Commands run only when selected;
+they are not sent automatically when a connection opens.
 
 ### SSH Requirements
 
@@ -152,7 +160,7 @@ builds CrossTerm on a clean `windows-2022` GitHub Actions runner, executes `buil
 The workflow can be started by:
 
 - Manually running **Windows Package** from the repository's **Actions** tab
-- Pushing a version tag such as `v0.6.1`, if tag-triggered builds are enabled in the workflow
+- Pushing a version tag such as `v0.7.6`, if tag-triggered builds are enabled in the workflow
 
 The resulting workflow artifact is:
 
@@ -178,10 +186,10 @@ The installer is created under:
 dist\installer\
 ```
 
-For CrossTerm 0.6.1, the expected installer is:
+For CrossTerm 0.7.6, the expected installer is:
 
 ```text
-dist\installer\CrossTerm-0.6.1-windows-x64-setup.exe
+dist\installer\CrossTerm-0.7.6-windows-x64-setup.exe
 ```
 
 The installer deploys the complete CrossTerm runtime package under:
@@ -212,6 +220,8 @@ Run CrossTerm with:
 ```bash
 ./dist/linux/bin/CrossTerm
 ```
+
+Prebuilt Linux packages are attached to each GitHub release for `x86_64` and `aarch64`. They use the system Qt libraries, so install Qt 6.8 or newer first (on Fedora: `sudo dnf install qt6-qtbase`), then extract the tarball for your architecture and run `./install_linux.sh`.
 
 Linux packaging has not yet received the same level of end-to-end validation as the Windows package.
 

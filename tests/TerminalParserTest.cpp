@@ -1,5 +1,8 @@
+// assert() is the check mechanism here, so keep it active in Release builds.
+#undef NDEBUG
 #include <cassert>
 
+#include "../src/profiles/ConnectionProfile.h"
 #include "../src/terminal/TerminalParser.h"
 
 int main()
@@ -10,8 +13,10 @@ int main()
 
         parser.processBytes(QByteArray("AB\nC"));
 
+        // LF moves down without returning to column 0; "C" lands at column 2
+        // and the cursor advances past it.
         assert(screen.cursor().row == 1);
-        assert(screen.cursor().column == 2);
+        assert(screen.cursor().column == 3);
         assert(screen.cellAt(0, 0).character == QChar('A'));
         assert(screen.cellAt(0, 1).character == QChar('B'));
         assert(screen.cellAt(1, 2).character == QChar('C'));
@@ -44,6 +49,20 @@ int main()
         screen.setScrollbackLimit(1);
         assert(screen.scrollbackSize() == 1);
         assert(screen.scrollbackLine(0).at(0).character == QChar('C'));
+    }
+
+    {
+        ConnectionProfile profile(QStringLiteral("Fedora Server"),
+                                  ConnectionProfile::ConnectionType::SSH);
+        const QList<QPair<QString, QString>> commands = {
+            {QStringLiteral("Update and reboot"),
+             QStringLiteral("sudo dnf -y update && sudo dnf -y upgrade && sudo reboot now")},
+            {QStringLiteral("Check disk space"), QStringLiteral("df -h")},
+        };
+        profile.setSavedCommands(commands);
+
+        const ConnectionProfile restored = ConnectionProfile::fromJson(profile.toJson());
+        assert(restored.savedCommands() == commands);
     }
 
     return 0;

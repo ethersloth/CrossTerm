@@ -1,6 +1,7 @@
 #include "ConnectionProfile.h"
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonDocument>
 
 ConnectionProfile::ConnectionProfile(const QString &name, ConnectionType type)
     : m_name(name), m_type(type)
@@ -20,6 +21,39 @@ void ConnectionProfile::setProperty(const QString &key, const QString &value)
 bool ConnectionProfile::hasProperty(const QString &key) const
 {
     return m_properties.contains(key);
+}
+
+QList<QPair<QString, QString>> ConnectionProfile::savedCommands() const
+{
+    QList<QPair<QString, QString>> commands;
+    const QJsonDocument document = QJsonDocument::fromJson(
+        property(QStringLiteral("saved_commands")).toUtf8());
+    for (const auto &value : document.array()) {
+        const QJsonObject commandObject = value.toObject();
+        const QString name = commandObject.value(QStringLiteral("name")).toString().trimmed();
+        const QString command = commandObject.value(QStringLiteral("command")).toString().trimmed();
+        if (!name.isEmpty() && !command.isEmpty())
+            commands.append(qMakePair(name, command));
+    }
+    return commands;
+}
+
+void ConnectionProfile::setSavedCommands(const QList<QPair<QString, QString>> &commands)
+{
+    QJsonArray commandArray;
+    for (const auto &[name, command] : commands) {
+        const QString trimmedName = name.trimmed();
+        const QString trimmedCommand = command.trimmed();
+        if (trimmedName.isEmpty() || trimmedCommand.isEmpty())
+            continue;
+
+        QJsonObject commandObject;
+        commandObject[QStringLiteral("name")] = trimmedName;
+        commandObject[QStringLiteral("command")] = trimmedCommand;
+        commandArray.append(commandObject);
+    }
+    setProperty(QStringLiteral("saved_commands"),
+                QString::fromUtf8(QJsonDocument(commandArray).toJson(QJsonDocument::Compact)));
 }
 
 QJsonObject ConnectionProfile::toJson() const

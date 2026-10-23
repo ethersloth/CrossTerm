@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/icons">
         <file>assets/cross_term_logo.png</file>
+        <file>assets/check.png</file>
+        <file>assets/chevron-up.png</file>
+        <file>assets/chevron-down.png</file>
     </qresource>
 </RCC>

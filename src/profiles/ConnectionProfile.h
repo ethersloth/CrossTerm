@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QString>
+#include <QList>
 #include <QMap>
 #include <QJsonObject>
+#include <QPair>
 
 /**
  * Represents a saved connection profile.
@@ -91,6 +93,9 @@ public:
     // Whether this session is pinned to the top of the session tree.
     bool isPinned() const { return property(QStringLiteral("pinned")) == QStringLiteral("1"); }
     void setPinned(bool pinned) { setProperty(QStringLiteral("pinned"), pinned ? QStringLiteral("1") : QStringLiteral("0")); }
+
+    QList<QPair<QString, QString>> savedCommands() const;
+    void setSavedCommands(const QList<QPair<QString, QString>> &commands);
 
     // Serialization
     QJsonObject toJson() const;

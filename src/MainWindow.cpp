@@ -4,12 +4,20 @@
 #include "widgets/TerminalWidget.h"
 #include "profiles/ProfileManager.h"
 #include "profiles/ConnectionProfile.h"
+#include "profiles/SecretStore.h"
+#include "backup/BackupArchive.h"
+#include "security/PrivateKeyPermissions.h"
+#include "dialogs/BackupDialogs.h"
 #include "dialogs/NewSessionDialog.h"
+#include "ui/Theme.h"
+#include "widgets/CommandBar.h"
+#include "widgets/SessionTabWidget.h"
 
 #include <QAction>
 #include <QCheckBox>
 #include <QColor>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDockWidget>
@@ -24,6 +32,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeySequence>
+#include <QLabel>
 #include <QMenuBar>
 #include <QMenu>
 #include <QMessageBox>
@@ -41,7 +50,7 @@
 #include <QStatusBar>
 #include <QStandardPaths>
 #include <QStyle>
-#include <QTabWidget>
+#include <QToolButton>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
@@ -97,13 +106,9 @@ QIcon colorSwatchIcon(const QColor &color)
 
 void applyProfileAppearance(QTreeWidgetItem *item, const ConnectionProfile &profile)
 {
-    const QString colorHex = profile.sessionColor();
-    if (colorHex.isEmpty())
-        return;
-
-    const QColor color(colorHex);
-    if (color.isValid())
-        item->setIcon(0, colorSwatchIcon(color));
+    const QColor color(profile.sessionColor());
+    item->setIcon(0, color.isValid() ? Theme::icon(Theme::IconKind::Server, color)
+                                     : Theme::icon(Theme::IconKind::Server));
 }
 
 // Returns whether `item` (or any descendant) is visible after filtering by `filterLower`.
@@ -144,19 +149,22 @@ protected:
 }
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_profileManager(new ProfileManager())
+    : QMainWindow(parent), m_profileManager(new ProfileManager()), m_secretStore(SecretStore::createSystemStore())
 {
-    setWindowTitle(QStringLiteral("CrossTerm 0.6.1"));
+    setWindowTitle(QStringLiteral("CrossTerm 0.7.6"));
     resize(1200, 760);
 
-    // Load saved profiles
+    // Load saved profiles; passwords come from the OS keychain when one is available.
+    m_profileManager->setSecretStore(m_secretStore.get());
     m_profileManager->loadProfiles();
 
     buildUi();
     buildMenus();
     populateSessions();
 
-    statusBar()->showMessage(QStringLiteral("Ready"));
+    const QString secretWarning = m_profileManager->secretStorageWarning();
+    statusBar()->showMessage(secretWarning.isEmpty() ? QStringLiteral("Ready") : secretWarning,
+                             secretWarning.isEmpty() ? 0 : 15000);
 }
 
 MainWindow::~MainWindow()
@@ -165,7 +173,7 @@ MainWindow::~MainWindow()
         return;
 
     for (int index = 0; index < m_tabs->count(); ++index) {
-        auto *terminal = qobject_cast<TerminalWidget *>(m_tabs->widget(index));
+        auto *terminal = terminalForPage(m_tabs->widget(index));
         if (!terminal || !terminal->connection())
             continue;
 
@@ -175,32 +183,90 @@ MainWindow::~MainWindow()
     }
 }
 
+TerminalWidget *MainWindow::terminalForPage(QWidget *page)
+{
+    return page ? page->findChild<TerminalWidget *>() : nullptr;
+}
+
+// Pushes a profile's saved commands into every open tab of that profile.
+void MainWindow::refreshSavedCommands(const QString &profileName,
+                                      const QList<QPair<QString, QString>> &commands,
+                                      QWidget *exceptPage)
+{
+    for (int index = 0; index < m_tabs->count(); ++index) {
+        QWidget *page = m_tabs->widget(index);
+        if (page == exceptPage || page->property("profileName").toString() != profileName)
+            continue;
+        if (auto *terminal = terminalForPage(page))
+            terminal->setSavedCommands(commands);
+        if (auto *commandBar = page->findChild<CommandBar *>())
+            commandBar->reloadCommands();
+    }
+}
+
 void MainWindow::buildUi()
 {
-    m_tabs = new QTabWidget(this);
-    m_tabs->setTabsClosable(true);
-    m_tabs->setMovable(true);
+    m_tabs = new SessionTabWidget(this);
     setCentralWidget(m_tabs);
 
-    connect(m_tabs, &QTabWidget::tabCloseRequested,
+    connect(m_tabs, &SessionTabWidget::tabCloseRequested,
             this, &MainWindow::closeTab);
+
+    auto *newTabMenu = new QMenu(m_tabs->newTabButton());
+    connect(newTabMenu->addAction(QStringLiteral("New Session...")), &QAction::triggered,
+            this, &MainWindow::onNewSession);
+    connect(newTabMenu->addAction(QStringLiteral("New Local Shell")), &QAction::triggered,
+            this, &MainWindow::onNewLocalShell);
+    m_tabs->newTabButton()->setMenu(newTabMenu);
 
     auto *dock = new QDockWidget(QStringLiteral("Sessions"), this);
     dock->setObjectName(QStringLiteral("SessionsDock"));
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_sessionsDock = dock;
+
+    // Custom title bar so the header matches the panel below it; it still
+    // acts as the drag handle for moving or floating the dock.
+    auto *titleBar = new QWidget(dock);
+    titleBar->setObjectName(QStringLiteral("SessionsHeader"));
+    titleBar->setAttribute(Qt::WA_StyledBackground);
+    auto *titleLayout = new QHBoxLayout(titleBar);
+    titleLayout->setContentsMargins(12, 8, 8, 4);
+    titleLayout->setSpacing(2);
+    auto *titleLabel = new QLabel(QStringLiteral("Sessions"), titleBar);
+    titleLabel->setObjectName(QStringLiteral("SessionsTitle"));
+    titleLayout->addWidget(titleLabel, 1);
+    auto *floatButton = new QToolButton(titleBar);
+    floatButton->setIcon(Theme::icon(Theme::IconKind::Undock, Theme::ColorRole::MutedText));
+    floatButton->setIconSize(QSize(14, 14));
+    floatButton->setToolTip(QStringLiteral("Float panel"));
+    connect(floatButton, &QToolButton::clicked, dock, [dock] { dock->setFloating(!dock->isFloating()); });
+    titleLayout->addWidget(floatButton);
+    auto *closeButton = new QToolButton(titleBar);
+    closeButton->setIcon(Theme::icon(Theme::IconKind::Close, Theme::ColorRole::MutedText));
+    closeButton->setIconSize(QSize(14, 14));
+    closeButton->setToolTip(QStringLiteral("Hide panel"));
+    connect(closeButton, &QToolButton::clicked, dock, &QDockWidget::close);
+    titleLayout->addWidget(closeButton);
+    dock->setTitleBarWidget(titleBar);
 
     auto *sessionsContainer = new QWidget(dock);
+    sessionsContainer->setObjectName(QStringLiteral("SessionsPanel"));
+    sessionsContainer->setAttribute(Qt::WA_StyledBackground);
     auto *sessionsLayout = new QVBoxLayout(sessionsContainer);
-    sessionsLayout->setContentsMargins(4, 4, 4, 4);
-    sessionsLayout->setSpacing(4);
+    sessionsLayout->setContentsMargins(8, 4, 8, 8);
+    sessionsLayout->setSpacing(8);
 
     m_sessionFilterEdit = new QLineEdit(sessionsContainer);
     m_sessionFilterEdit->setPlaceholderText(QStringLiteral("Filter sessions..."));
     m_sessionFilterEdit->setClearButtonEnabled(true);
+    m_sessionFilterEdit->addAction(Theme::icon(Theme::IconKind::Search, Theme::ColorRole::MutedText),
+                                   QLineEdit::TrailingPosition);
     sessionsLayout->addWidget(m_sessionFilterEdit);
 
     auto *sessionTree = new SessionTreeWidget(sessionsContainer);
     sessionTree->setHeaderHidden(true);
+    sessionTree->setIconSize(QSize(18, 18));
+    sessionTree->setIndentation(16);
     sessionTree->setContextMenuPolicy(Qt::CustomContextMenu);
     sessionTree->setDragEnabled(true);
     sessionTree->setAcceptDrops(true);
@@ -213,6 +279,7 @@ void MainWindow::buildUi()
 
     dock->setWidget(sessionsContainer);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
+    resizeDocks({dock}, {280}, Qt::Horizontal);
 
     connect(m_sessionTree, &QTreeWidget::itemDoubleClicked,
             this, &MainWindow::openSelectedSession);
@@ -248,6 +315,23 @@ void MainWindow::buildMenus()
     connect(close, &QAction::triggered, this, &MainWindow::closeCurrentTab);
 
     fileMenu->addSeparator();
+    auto *exportBackup = fileMenu->addAction(QStringLiteral("&Export Backup..."));
+    connect(exportBackup, &QAction::triggered, this, [this] {
+        BackupDialogs::exportBackup(this, *m_profileManager);
+    });
+    auto *importBackup = fileMenu->addAction(QStringLiteral("&Import Backup..."));
+    connect(importBackup, &QAction::triggered, this, [this] {
+        if (!BackupDialogs::importBackup(this, *m_profileManager))
+            return;
+        const QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
+        Theme::instance().apply(Theme::modeFromString(
+            settings.value(QStringLiteral("global/theme"), QStringLiteral("dark")).toString()));
+        for (const auto &profile : m_profileManager->allProfiles())
+            refreshSavedCommands(profile.name(), profile.savedCommands());
+        populateSessions();
+    });
+
+    fileMenu->addSeparator();
     auto *quit = fileMenu->addAction(QStringLiteral("E&xit"));
     quit->setShortcut(QKeySequence::Quit);
     connect(quit, &QAction::triggered, this, &QWidget::close);
@@ -255,6 +339,36 @@ void MainWindow::buildMenus()
     auto *sessionMenu = menuBar()->addMenu(QStringLiteral("&Session"));
     sessionMenu->addAction(newSession);
     sessionMenu->addAction(newLocal);
+    sessionMenu->addSeparator();
+    sessionMenu->addAction(m_sessionsDock->toggleViewAction());
+    m_savedCommandsMenu = sessionMenu->addMenu(QStringLiteral("Saved Commands"));
+    connect(m_savedCommandsMenu, &QMenu::aboutToShow, this, [this]() {
+        m_savedCommandsMenu->clear();
+        auto *terminal = terminalForPage(m_tabs->currentWidget());
+        if (!terminal) {
+            QAction *unavailable = m_savedCommandsMenu->addAction(QStringLiteral("No active session"));
+            unavailable->setEnabled(false);
+            return;
+        }
+
+        const auto commands = terminal->savedCommands();
+        if (commands.isEmpty()) {
+            QAction *empty = m_savedCommandsMenu->addAction(QStringLiteral("No commands saved for this session"));
+            empty->setEnabled(false);
+            return;
+        }
+
+        const bool connected = terminal->connection() && terminal->connection()->isConnected();
+        for (const auto &[name, command] : commands) {
+            QAction *commandAction = m_savedCommandsMenu->addAction(name);
+            commandAction->setToolTip(command);
+            commandAction->setEnabled(connected);
+            connect(commandAction, &QAction::triggered, terminal, [this, terminal, name, command]() {
+                if (terminal->runCommand(command))
+                    statusBar()->showMessage(QStringLiteral("Sent command: %1").arg(name), 2500);
+            });
+        }
+    });
 
     auto *globalOptionsMenu = menuBar()->addMenu(QStringLiteral("&Global Options"));
     auto *globalSettings = globalOptionsMenu->addAction(QStringLiteral("Settings..."));
@@ -265,7 +379,7 @@ void MainWindow::buildMenus()
     connect(about, &QAction::triggered, this, [this] {
         QMessageBox::about(this,
                            QStringLiteral("About CrossTerm"),
-                           QStringLiteral("CrossTerm 0.6.1\n\n"
+                           QStringLiteral("CrossTerm 0.7.6\n\n"
                                           "A cross-platform terminal and connection manager built with C++20 and Qt 6.\n\n"
                                           "Features:\n"
                                           "• VT100 Terminal Emulation\n"
@@ -281,6 +395,7 @@ void MainWindow::populateSessions()
 
     auto *localShell = new QTreeWidgetItem(m_sessionTree, {QStringLiteral("Local Shell")});
     localShell->setData(0, RoleKind, QStringLiteral("local-shell"));
+    localShell->setIcon(0, Theme::icon(Theme::IconKind::Terminal));
     localShell->setFlags(localShell->flags() & ~(Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled));
 
     const auto allProfiles = m_profileManager->allProfiles();
@@ -293,6 +408,7 @@ void MainWindow::populateSessions()
     if (!pinnedProfiles.isEmpty()) {
         auto *pinnedGroup = new QTreeWidgetItem(m_sessionTree, {QStringLiteral("Pinned")});
         pinnedGroup->setData(0, RoleKind, QStringLiteral("pinned-group"));
+        pinnedGroup->setIcon(0, Theme::icon(Theme::IconKind::Pin));
         pinnedGroup->setFlags(pinnedGroup->flags() & ~(Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled));
         for (const auto &profile : pinnedProfiles) {
             auto *item = new QTreeWidgetItem(pinnedGroup, {profile.name()});
@@ -313,6 +429,7 @@ void MainWindow::populateSessions()
     if (!recentProfiles.isEmpty()) {
         auto *recentGroup = new QTreeWidgetItem(m_sessionTree, {QStringLiteral("Recent")});
         recentGroup->setData(0, RoleKind, QStringLiteral("recent-group"));
+        recentGroup->setIcon(0, Theme::icon(Theme::IconKind::Clock));
         recentGroup->setFlags(recentGroup->flags() & ~(Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled));
         for (const auto &profile : recentProfiles) {
             auto *item = new QTreeWidgetItem(recentGroup, {profile.name()});
@@ -344,7 +461,7 @@ void MainWindow::populateSessions()
         item->setData(0, RoleKind, QStringLiteral("folder"));
         item->setData(0, RoleFolderPath, path);
         item->setFlags(item->flags() | Qt::ItemIsDropEnabled | Qt::ItemIsDragEnabled);
-        item->setIcon(0, style()->standardIcon(QStyle::SP_DirIcon));
+        item->setIcon(0, Theme::icon(Theme::IconKind::Folder));
         folderItems.insert(path, item);
         return item;
     };
@@ -578,6 +695,12 @@ void MainWindow::onSessionContextMenu(const QPoint &pos)
             return;
         }
 
+        for (int index = 0; index < m_tabs->count(); ++index) {
+            QWidget *page = m_tabs->widget(index);
+            if (page->property("profileName").toString() == profileName)
+                page->setProperty("profileName", updated.name());
+        }
+        refreshSavedCommands(updated.name(), updated.savedCommands());
         populateSessions();
         return;
     }
@@ -866,6 +989,12 @@ void MainWindow::onGlobalOptions()
     QSettings settings(QStringLiteral("CrossTerm"), QStringLiteral("CrossTerm"));
     const QString defaultLogDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/logs");
 
+    auto *themeMode = new QComboBox(&dialog);
+    themeMode->addItem(QStringLiteral("Dark"), Theme::modeToString(Theme::Mode::Dark));
+    themeMode->addItem(QStringLiteral("Light"), Theme::modeToString(Theme::Mode::Light));
+    themeMode->setCurrentIndex(themeMode->findData(Theme::modeToString(Theme::instance().mode())));
+    form->addRow(QStringLiteral("Theme:"), themeMode);
+
     auto *enableLoggingByDefault = new QCheckBox(QStringLiteral("Enable logging by default for new sessions"), &dialog);
     enableLoggingByDefault->setChecked(settings.value(QStringLiteral("global/loggingEnabledByDefault"), false).toBool());
     form->addRow(enableLoggingByDefault);
@@ -946,6 +1075,10 @@ void MainWindow::onGlobalOptions()
     settings.setValue(QStringLiteral("global/fontFamily"), fontFamily->currentFont().family());
     settings.setValue(QStringLiteral("global/fontSize"), fontSize->value());
     settings.setValue(QStringLiteral("global/downloadDirectory"), downloadDirectory->text().trimmed());
+    const QString theme = themeMode->currentData().toString();
+    settings.setValue(QStringLiteral("global/theme"), theme);
+    if (Theme::modeFromString(theme) != Theme::instance().mode())
+        Theme::instance().apply(Theme::modeFromString(theme));
     statusBar()->showMessage(QStringLiteral("Global options saved"), 2500);
 }
 
@@ -982,6 +1115,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
     const int defaultScrollbackLines = settings.value(QStringLiteral("global/scrollbackLines"), 10000).toInt();
     terminal->setScrollbackLimit(profile.property(QStringLiteral("scrollback_lines"),
                                                   QString::number(defaultScrollbackLines)).toInt());
+    terminal->setSavedCommands(profile.savedCommands());
 
     // Create connection based on profile type
     IConnection *connection = nullptr;
@@ -991,7 +1125,26 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
         connection = new LocalShellConnection(terminal);
         break;
 
-    case ConnectionProfile::ConnectionType::SSH:
+    case ConnectionProfile::ConnectionType::SSH: {
+        // Keys CrossTerm restored itself are re-secured before every launch,
+        // which also repairs ones imported by 0.7.6 with ACLs Windows OpenSSH
+        // rejects. Keys elsewhere belong to the user and are left alone.
+        const QString keyPath = BackupArchive::expandHome(profile.sshPrivateKey().trimmed());
+        if (!keyPath.isEmpty() && QFileInfo::exists(keyPath) && PrivateKeyPermissions::isInKeyDirectory(keyPath)) {
+            QString details;
+            if (!PrivateKeyPermissions::isSecure(keyPath, &details)
+                && !PrivateKeyPermissions::secureFile(keyPath, &details)) {
+                qWarning("Could not secure private key %s: %s", qPrintable(keyPath), qPrintable(details));
+                QMessageBox::critical(this, QStringLiteral("Private Key Not Secured"),
+                                      QStringLiteral("CrossTerm could not secure the private key for OpenSSH.\n\n"
+                                                     "Key:\n%1\n\n"
+                                                     "The key was not used because its file permissions could not be "
+                                                     "restricted to the current user.\n\nDetails: %2")
+                                          .arg(QDir::toNativeSeparators(keyPath), details));
+                terminal->deleteLater();
+                return;
+            }
+        }
         connection = new SshConnection(profile.sshHost(),
                                        profile.sshPort(),
                                        profile.sshUsername(),
@@ -999,6 +1152,7 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
                                        profile.sshPassword(),
                                        terminal);
         break;
+    }
 
     case ConnectionProfile::ConnectionType::Serial:
         // TODO: Implement Serial connection
@@ -1022,31 +1176,70 @@ void MainWindow::openProfileSession(const ConnectionProfile &profile)
 
     terminal->setConnection(connection);
 
-    const int index = m_tabs->addTab(terminal, profile.name());
+    auto *page = new QWidget(m_tabs);
+    page->setProperty("profileName", profile.name());
+    auto *pageLayout = new QVBoxLayout(page);
+    pageLayout->setContentsMargins(0, 0, 0, 0);
+    pageLayout->setSpacing(0);
+    auto *commandBar = new CommandBar(terminal, page);
+    pageLayout->addWidget(commandBar);
+    pageLayout->addWidget(terminal, 1);
+    connect(commandBar, &CommandBar::commandSent, this, [this](const QString &label) {
+        statusBar()->showMessage(QStringLiteral("Sent command: %1").arg(label), 2500);
+    });
+    connect(commandBar, &CommandBar::commandsEdited, this, [this, page](const CommandBar::CommandList &commands) {
+        const QString name = page->property("profileName").toString();
+        if (!m_profileManager->hasProfile(name)) {
+            statusBar()->showMessage(QStringLiteral("Command kept for this tab only; save the session as a profile to keep it"),
+                                     5000);
+            return;
+        }
+
+        ConnectionProfile updated = m_profileManager->profile(name);
+        updated.setSavedCommands(commands);
+        m_profileManager->updateProfile(updated);
+        if (!m_profileManager->saveProfiles()) {
+            statusBar()->showMessage(QStringLiteral("Failed to save commands for %1").arg(name), 5000);
+            return;
+        }
+        refreshSavedCommands(name, commands, page);
+        statusBar()->showMessage(QStringLiteral("Saved commands updated for %1").arg(name), 2500);
+    });
+
+    const int index = m_tabs->addTab(page, QIcon(), profile.name());
     m_tabs->setCurrentIndex(index);
 
-    connect(connection, &IConnection::connected, terminal, [this, terminal, profile] {
-        const int idx = m_tabs->indexOf(terminal);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [LIVE]"));
+    // The tab shows state as a status dot; the tooltip spells it out.
+    const auto setTabState = [this, page, name = profile.name()](Theme::SessionState state) {
+        const int idx = m_tabs->indexOf(page);
+        if (idx < 0)
+            return;
+        QString label;
+        switch (state) {
+        case Theme::SessionState::Connecting: label = QStringLiteral("connecting"); break;
+        case Theme::SessionState::Connected: label = QStringLiteral("connected"); break;
+        case Theme::SessionState::Disconnected: label = QStringLiteral("disconnected"); break;
         }
+        m_tabs->setTabIcon(idx, Theme::sessionTabIcon(state));
+        m_tabs->setTabToolTip(idx, QStringLiteral("%1 \u2014 %2").arg(name, label));
+    };
+    setTabState(Theme::SessionState::Connecting);
+
+    connect(connection, &IConnection::connected, page, [this, commandBar, profile, setTabState] {
+        setTabState(Theme::SessionState::Connected);
+        commandBar->setConnected(true);
         statusBar()->showMessage(QStringLiteral("Connected: %1").arg(profile.name()), 2500);
     });
-    connect(connection, &IConnection::disconnected, terminal, [this, terminal, connection, profile] {
-        const int idx = m_tabs->indexOf(terminal);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [DOWN]"));
-        }
+    connect(connection, &IConnection::disconnected, page, [this, commandBar, profile, setTabState] {
+        setTabState(Theme::SessionState::Disconnected);
+        commandBar->setConnected(false);
         statusBar()->showMessage(QStringLiteral("Disconnected: %1").arg(profile.name()), 2500);
     });
-    connect(terminal, &TerminalWidget::reconnectRequested, terminal, [this, terminal, connection, profile] {
+    connect(terminal, &TerminalWidget::reconnectRequested, page, [this, connection, profile, setTabState] {
         if (!connection || connection->isConnected())
             return;
 
-        const int idx = m_tabs->indexOf(terminal);
-        if (idx >= 0) {
-            m_tabs->setTabText(idx, profile.name() + QStringLiteral(" [RECONNECTING]") );
-        }
+        setTabState(Theme::SessionState::Connecting);
         statusBar()->showMessage(QStringLiteral("Manual reconnect: %1").arg(profile.name()), 2500);
         connection->connectSession();
     });
@@ -1115,7 +1308,7 @@ void MainWindow::closeTab(int index)
         return;
 
     QWidget *page = m_tabs->widget(index);
-    if (auto *terminal = qobject_cast<TerminalWidget *>(page)) {
+    if (auto *terminal = terminalForPage(page)) {
         if (terminal->connection()) {
             terminal->connection()->setProperty("closing", true);
             terminal->connection()->disconnectSession();

@@ -2,11 +2,17 @@
 
 #include <QMainWindow>
 
+#include <memory>
+
 class QTreeWidget;
-class QTabWidget;
+class QDockWidget;
+class SessionTabWidget;
+class TerminalWidget;
 class QTreeWidgetItem;
 class QLineEdit;
+class QMenu;
 class ProfileManager;
+class SecretStore;
 class ConnectionProfile;
 
 class MainWindow final : public QMainWindow
@@ -39,9 +45,16 @@ private:
     void importFolder(const QString &targetPath);
     QStringList recentSessionNames() const;
     void pushRecentSession(const QString &name);
+    static TerminalWidget *terminalForPage(QWidget *page);
+    void refreshSavedCommands(const QString &profileName,
+                              const QList<QPair<QString, QString>> &commands,
+                              QWidget *exceptPage = nullptr);
 
     QTreeWidget *m_sessionTree = nullptr;
     QLineEdit *m_sessionFilterEdit = nullptr;
-    QTabWidget *m_tabs = nullptr;
+    SessionTabWidget *m_tabs = nullptr;
+    QDockWidget *m_sessionsDock = nullptr;
+    QMenu *m_savedCommandsMenu = nullptr;
     ProfileManager *m_profileManager = nullptr;
+    std::unique_ptr<SecretStore> m_secretStore;
 };
