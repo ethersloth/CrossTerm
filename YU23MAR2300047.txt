@@ -1,0 +1,531 @@
+[?9001h[?1004h[?25l[2J[m[2;1Hflexedge:~#[1C]0;C:\WINDOWS\System32\OpenSSH\ssh.exe[?25hcd /t[?25lflexedge:~# cd /tmp/[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K[2;21H[?25h
+flexedge:/tmp# ll
+total 4
+-rw-r--r--    1 root     root            31 Aug 28 14:14 5ACF2DF051BDA278
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mcore[m
+drwxr-xr-x   15 root     root           300 Aug 28 14:15 [34m[1mcrimson
+[mdrwxr-xr-x    2 root     root            80 Aug 28 14:14 [34m[1minfo[m
+drwxr-xr-x    2 root     root            80 Aug 28 14:15 [34m[1msleds[m
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mtalk2m[m
+flexedge:/tmp# sz 5A[?25lflexedge:/tmp# sz 5ACF2DF051BDA278[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K[11;36H[?25h
+-ash: sz: not found
+flexedge:/tmp# [?25l^C[15;1Hflexedge:/tmp# [?25hapk update
+tps://ohse.de/uwe/releases/lrzsz-0.12.20.tar.gz
+tar -xf lrzsz-0.12.20.tar.gz
+cd lrzsz-0.12.20/
+./configure
+make
+make install
+ln -s /usr/local/bin/lrz /usr/local/bin/rz
+ln -s /usr/local/bin/lsz /usr/local/bin/sz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.18/main/armv7/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.18/community/armv7/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.17/main/armv7/APKINDEX.tar.gz
+v3.18.12-192-gb0b6b9a320c [http://dl-cdn.alpinelinux.org/alpine/v3.18/main]
+v3.18.12-189-gfa999812df3 [http://dl-cdn.alpinelinux.org/alpine/v3.18/community]
+v3.17.10-130-g4735b031de2 [http://dl-cdn.alpinelinux.org/alpine/v3.17/main]
+OK: 24306 distinct packages available
+flexedge:/tmp# apk add wget gcc g++ make
+(1/13) Installing libstdc++-dev (12.2.1_git20220924-r10)
+  0%[87X[87C  1%[K[87C  1% █[K[85C  2% █[K[85C  2% ██[K[84C  3% ██[K[84C  3% ███[K[83C  4% ███[K[83C  4% ████[K[82C  5% ████[K[82C  5% █████[K[81C  6% █████[K[81C  6% ██████[K[80C  7% ██████[K[80C  8% ██████[K[80C  8% ███████[K[79C  9% ███████[K[79C  9% ████████[K[78C 10% ████████[K[78C 10% █████████[K[77C 11% █████████[K[77C 11% ██████████[K[76C 12% ██████████[K[76C 13% ███████████[K[75C 14% ████████████[K[74C 15% █████████████[K[73C 16% █████████████[K[73C 16% ██████████████[K[72C 17% ██████████████[K[72C 17% ███████████████[K[71C 18% ███████████████[K[71C 18% ████████████████[K[70C 19% ████████████████[K[70C 19% █████████████████[K[69C 20% █████████████████[K[69C 21% ██████████████████[K[68C 22% ██████████████████[K[68C 22% ███████████████████[K[67C 23% ███████████████████[K[67C 23% ████████████████████[K[66C 24% ████████████████████[K[66C 24% █████████████████████[K[65C 25% █████████████████████[K[65C 25% ██████████████████████[K[64C 26% ██████████████████████[K[64C 26% ███████████████████████[K[63C 27% ███████████████████████[K[63C 27% ████████████████████████[K[62C 28% ████████████████████████[K[62C 29% █████████████████████████[K[61C 30% █████████████████████████[K[61C 30% ██████████████████████████[K[60C 31% ██████████████████████████[K[60C 31% ███████████████████████████[K[59C(2/13) Installing binutils (2.40-r8)[K
+ 31% ███████████████████████████[59X[59C 32% ███████████████████████████[K[59C 32% ████████████████████████████[K[58C 33% ████████████████████████████[K[58C 33% █████████████████████████████[K[57C 34% █████████████████████████████[K[57C 34% ██████████████████████████████[K[56C 35% ██████████████████████████████[K[56C(3/13) Installing libgomp (12.2.1_git20220924-r10)[K
+ 35% ██████████████████████████████[56X[56C(4/13) Installing libatomic (12.2.1_git20220924-r10)[K
+ 35% ██████████████████████████████[56X[56C(5/13) Installing isl26 (0.26-r1)[K
+ 35% ██████████████████████████████[56X[56C(6/13) Installing mpfr4 (4.2.0_p12-r0)[K
+ 36% ███████████████████████████████[55C(7/13) Installing mpc1 (1.3.1-r1)[K
+ 36% ███████████████████████████████[55C(8/13) Installing gcc (12.2.1_git20220924-r10)[K
+ 36% ███████████████████████████████[55C 37% ███████████████████████████████[K[55C 37% ████████████████████████████████[K[54C 38% ████████████████████████████████[K[54C 38% █████████████████████████████████[K[53C 39% █████████████████████████████████[K[53C 39% ██████████████████████████████████[K[52C 40% ██████████████████████████████████[K[52C 40% ███████████████████████████████████[K[51C 41% ███████████████████████████████████[K[51C 42% ████████████████████████████████████[K[50C 43% ████████████████████████████████████[K[50C 43% █████████████████████████████████████[K[49C 44% █████████████████████████████████████[K[49C 44% ██████████████████████████████████████[K[48C 45% ██████████████████████████████████████[K[48C 45% ███████████████████████████████████████[K[47C 46% ███████████████████████████████████████[K[47C 46% ████████████████████████████████████████[K[46C 47% ████████████████████████████████████████[K[46C 47% █████████████████████████████████████████[K[45C 48% █████████████████████████████████████████[K[45C 48% ██████████████████████████████████████████[K[44C 49% ██████████████████████████████████████████[K[44C 50% ███████████████████████████████████████████[K[43C 51% ███████████████████████████████████████████[K[43C 51% ████████████████████████████████████████████[K[42C 52% ████████████████████████████████████████████[K[42C 52% █████████████████████████████████████████████[K[41C 53% █████████████████████████████████████████████[K[41C 53% ██████████████████████████████████████████████[K[40C 54% ██████████████████████████████████████████████[K[40C 54% ███████████████████████████████████████████████[K[39C 55% ███████████████████████████████████████████████[K[39C 55% ████████████████████████████████████████████████[K[38C 56% ████████████████████████████████████████████████[K[38C 56% █████████████████████████████████████████████████[K[37C 57% █████████████████████████████████████████████████[K[37C 58% █████████████████████████████████████████████████[K[37C 58% ██████████████████████████████████████████████████[K[36C 59% ██████████████████████████████████████████████████[K[36C 59% ███████████████████████████████████████████████████[K[35C 60% ███████████████████████████████████████████████████[K[35C 60% ████████████████████████████████████████████████████[K[34C 61% ████████████████████████████████████████████████████[K[34C 61% █████████████████████████████████████████████████████[K[33C 62% █████████████████████████████████████████████████████[K[33C 62% ██████████████████████████████████████████████████████[K[32C 63% ██████████████████████████████████████████████████████[K[32C 64% ███████████████████████████████████████████████████████[K[31C 65% ███████████████████████████████████████████████████████[K[31C 65% ████████████████████████████████████████████████████████[K[30C 66% ████████████████████████████████████████████████████████[K[30C 66% █████████████████████████████████████████████████████████[K[29C 67% █████████████████████████████████████████████████████████[K[29C 67% ██████████████████████████████████████████████████████████[K[28C 68% ██████████████████████████████████████████████████████████[K[28C 68% ███████████████████████████████████████████████████████████[K[27C 69% ███████████████████████████████████████████████████████████[K[27C 69% ████████████████████████████████████████████████████████████[K[26C 70% ████████████████████████████████████████████████████████████[K[26C 70% █████████████████████████████████████████████████████████████[K[25C 71% █████████████████████████████████████████████████████████████[K[25C 72% ██████████████████████████████████████████████████████████████[K[24C 73% ██████████████████████████████████████████████████████████████[K[24C 73% ███████████████████████████████████████████████████████████████[K[23C 74% ███████████████████████████████████████████████████████████████[K[23C 74% ████████████████████████████████████████████████████████████████[K[22C 75% ████████████████████████████████████████████████████████████████[K[22C 75% █████████████████████████████████████████████████████████████████[K[21C 76% █████████████████████████████████████████████████████████████████[K[21C 76% ██████████████████████████████████████████████████████████████████[K[20C 77% ██████████████████████████████████████████████████████████████████[K[20C 77% ███████████████████████████████████████████████████████████████████[K[19C 78% ███████████████████████████████████████████████████████████████████[K[19C 79% ████████████████████████████████████████████████████████████████████[K[18C 80% ████████████████████████████████████████████████████████████████████[K[18C 80% █████████████████████████████████████████████████████████████████████[K[17C 81% █████████████████████████████████████████████████████████████████████[K[17C(9/13) Installing musl-dev (1.2.4-r3)[K
+ 81% █████████████████████████████████████████████████████████████████████[17C 81% ██████████████████████████████████████████████████████████████████████[K[16C 82% ██████████████████████████████████████████████████████████████████████[K[16C 82% ███████████████████████████████████████████████████████████████████████[K[15C 83% ███████████████████████████████████████████████████████████████████████[K[15C 83% ████████████████████████████████████████████████████████████████████████[K[14C 84% ████████████████████████████████████████████████████████████████████████[K[14C 84% █████████████████████████████████████████████████████████████████████████[K[13C 85% █████████████████████████████████████████████████████████████████████████[K[13C 86% ██████████████████████████████████████████████████████████████████████████[K[12C(10/13) Installing libc-dev (0.7.2-r5)[K
+ 86% ██████████████████████████████████████████████████████████████████████████[12X[12C(11/13) Installing g++ (12.2.1_git20220924-r10)[K
+ 86% ██████████████████████████████████████████████████████████████████████████[12C 87% ██████████████████████████████████████████████████████████████████████████[K[12C 87% ███████████████████████████████████████████████████████████████████████████[K[11C 88% ███████████████████████████████████████████████████████████████████████████[K[11C 88% ████████████████████████████████████████████████████████████████████████████[K[10C 89% ████████████████████████████████████████████████████████████████████████████[K[10C 89% █████████████████████████████████████████████████████████████████████████████[K[9C 90% █████████████████████████████████████████████████████████████████████████████[K[9C 90% ██████████████████████████████████████████████████████████████████████████████[K[8C 91% ██████████████████████████████████████████████████████████████████████████████[K[8C 91% ███████████████████████████████████████████████████████████████████████████████        [37;92H 92% ███████████████████████████████████████████████████████████████████████████████        [37;92H 93% ████████████████████████████████████████████████████████████████████████████████       [37;92H 94% ████████████████████████████████████████████████████████████████████████████████       [37;92H 94% █████████████████████████████████████████████████████████████████████████████████      [37;92H 95% █████████████████████████████████████████████████████████████████████████████████      [37;92H 95% ██████████████████████████████████████████████████████████████████████████████████     [37;92H 96% ██████████████████████████████████████████████████████████████████████████████████     [37;92H 96% ███████████████████████████████████████████████████████████████████████████████████    [37;92H 97% ███████████████████████████████████████████████████████████████████████████████████    [37;92H 97% ████████████████████████████████████████████████████████████████████████████████████   [37;92H 98% ████████████████████████████████████████████████████████████████████████████████████   [37;92H 98% █████████████████████████████████████████████████████████████████████████████████████  [37;92H 99% █████████████████████████████████████████████████████████████████████████████████████  [37;92H(12/13) Installing make (4.4.1-r1)[K
+ 99% █████████████████████████████████████████████████████████████████████████████████████  (13/13) Installing wget (1.21.4-r0)[K
+ 99% █████████████████████████████████████████████████████████████████████████████████████  Executing busybox-1.36.1-r7.trigger[K
+OK: 252 MiB in 169 packages
+flexedge:/tmp# wget https://ohse.de/uwe/releases/lrzsz-0.12.20.tar.gz
+--2026-09-04 18:44:50--  https://ohse.de/uwe/releases/lrzsz-0.12.20.tar.gz
+Resolving ohse.de (ohse.de)... 213.239.204.137, 2a01:4f8:222:b58:9:0:109:1
+Connecting to ohse.de (ohse.de)|213.239.204.137|:443...[1Cconnected.
+HTTP request sent, awaiting response... 200 OK
+Length: 280938 (274K) [application/gzip]
+Saving to: 'lrzsz-0.12.20.tar.gz'
+
+lrzsz-0.12.20.tar.gz     0%[                             ]       0  --.-KB/s[15X[15Clrzsz-0.12.20.tar.gz    10%[==>                          ]  29.16K   126KB/s[15X[15Clrzsz-0.12.20.tar.gz    28%[=======>                     ]  78.40K   177KB/s[15X[15Clrzsz-0.12.20.tar.gz    70%[===================>         ] 192.50K   286KB/s[15X[15Clrzsz-0.12.20.tar.gz   100%[============================>] 274.35K   353KB/s    in 0.8s    [37;1H
+
+2026-09-04 18:44:53 (353 KB/s) - 'lrzsz-0.12.20.tar.gz' saved [280938/280938]
+
+flexedge:/tmp# tar -xf[1Clrzsz-0.12.20.tar.gz
+flexedge:/tmp# cd lrzsz-0.12.20/
+flexedge:/tmp/lrzsz-0.12.20# ./configure
+creating cache ./config.cache
+checking for a BSD compatible install... /usr/bin/install -c
+checking whether build environment is sane...[1Cyes
+checking whether make sets ${MAKE}... yes
+checking for working aclocal... missing
+checking for working autoconf... missing
+checking for working automake... missing
+checking for working autoheader... missing
+checking for working makeinfo... missing
+checking for gcc... gcc
+checking whether the C compiler (gcc  ) works...[1Cyes
+checking whether the C compiler (gcc  ) is a cross-compiler... no
+checking whether we are using GNU C...[1Cyes
+checking whether gcc accepts -g...[1Cyes
+checking how to run the C preprocessor...[1Cgcc -E
+checking whether gcc needs -traditional...[1Cno
+checking for ranlib... ranlib
+checking for POSIXized ISC... no
+checking for AIX...[1Cno
+checking for minix/config.h... no
+checking for gcc option to accept ANSI C...[1Cnone needed
+checking for function prototypes...[1Cyes
+checking for working const...[1Cyes
+checking for inline...[1Cinline
+checking for syslog in -lsocket... no
+checking for syslog in -lbe...[1Cno
+checking for gethostbyname in -lnsl...[1Cno
+checking for ANSI C header files...[1Cyes
+checking for fcntl.h... yes
+checking for limits.h... yes
+checking for sys/ioctl.h...[1Cyes
+checking for sys/time.h... yes
+checking for unistd.h... yes
+checking for sys/times.h... yes
+checking for termios.h... yes
+checking for sys/termios.h... no
+checking for termio.h... no
+checking for sys/termio.h... no
+checking for sgtty.h...[1Cno
+checking for termios.h... (cached) yes
+checking for sys/termios.h... (cached) no
+checking for termio.h... (cached) no
+checking for sys/termio.h...[1C(cached) no
+checking for sgtty.h... (cached) no
+checking for sys/mman.h...[1Cyes
+checking for utime.h... yes
+checking for syslog.h... yes
+checking for sys/syslog.h... yes
+checking for sys/param.h... yes
+checking for sys/select.h... yes
+checking for strings.h... yes
+checking for arpa/inet.h... yes
+checking for size_t... yes
+checking for mode_t...[1Cyes
+checking for off_t...[1Cyes
+checking for speed_t...[1Cyes
+checking for st_rdev in struct stat...[1Cyes
+checking whether time.h and sys/time.h may both be included...[1Cyes
+checking whether sys/time.h and sys/select.h may both be included...[1Cyes
+checking whether struct tm is in sys/time.h or time.h...[1Ctime.h
+checking for errno declaration...[1Cyes
+checking whether setvbuf arguments are reversed... no
+checking return type of signal handlers... void
+checking for unistd.h... (cached) yes
+checking for getpagesize... yes
+checking for working mmap... yes
+checking for working alloca.h... yes
+checking for alloca... yes
+checking for gettimeofday... yes
+checking for settimeofday... yes
+checking for strchr... yes
+checking for memcpy... yes
+checking for select... yes
+checking for vprintf... yes
+checking for times... yes
+checking for rdchk... no
+checking for utime...[1Cyes
+checking for syslog... yes
+checking for siginterrupt...[1Cyes
+checking for mkdir... yes
+checking for mktime... yes
+checking for strerror... yes
+checking for strstr... yes
+checking for strdup... yes
+checking for strtoul... yes
+checking for strtol... yes
+checking for strpbrk... yes
+checking for stpcpy...[1Cyes
+checking for strftime... yes
+checking for vasprintf... yes
+checking for getopt_long... yes
+checking for ftime...[1Cyes
+checking that ftime works correctly...[1Cyes
+checking for timezone variable...[1Cyes
+checking for LOG_UUCP... yes
+checking for argz.h... no
+checking for limits.h... (cached) yes
+checking for locale.h... yes
+checking for nl_types.h... yes
+checking for malloc.h... yes
+checking for string.h... yes
+checking for unistd.h... (cached) yes
+checking for values.h... yes
+checking for sys/param.h... (cached) yes
+checking for getcwd...[1Cyes
+checking for munmap...[1Cyes
+checking for putenv...[1Cyes
+checking for setenv... yes
+checking for setlocale... yes
+checking for strchr... (cached) yes
+checking for strcasecmp...[1Cyes
+checking for __argz_count...[1Cno
+checking for __argz_stringify...[1Cno
+checking for __argz_next...[1Cno
+checking for LC_MESSAGES... yes
+checking whether NLS is requested... yes
+checking whether included gettext is requested... no
+checking for libintl.h...[1Cno
+checking whether catgets can be used... no
+checking for msgfmt...[1Cmsgfmt
+checking for gmsgfmt... msgfmt
+checking for xgettext... :
+checking for catalogs to be installed...  de
+updating cache ./config.cache
+creating ./config.status
+creating Makefile
+creating intl/Makefile
+creating lib/Makefile
+creating testsuite/Makefile
+creating man/Makefile
+creating po/Makefile.in
+creating src/Makefile
+creating debian/rules
+creating Specfile
+creating systype
+creating src/lrzszbug
+creating config.h
+linking ./intl/libgettext.h to intl/libintl.h
+flexedge:/tmp/lrzsz-0.12.20# make
+make all-recursive
+make[1]: Entering directory '/tmp/lrzsz-0.12.20'
+Making all in lib
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/lib'
+gcc -DHAVE_CONFIG_H -I. -I. -I..   -g -O2 -c long-options.c
+[1mlong-options.c:[22m In function '[1mparse_long_options[22m':[K
+[1mlong-options.c:65:11:[22m [35m[1mwarning: [mimplicit declaration of function '[1mexit[22m' [[35m]8;id=11736-1;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wimplicit-function-declaration\[1m-Wimplicit-function-[m]8;;\
+[35m]8;id=11736-1;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wimplicit-function-declaration\[1m[36;92H-declaration[m]8;;\][K
+   65 |[35m[1m[11Cexit[m (0);[K
+      |[35m[1m[11C^~~~[m[K
+[1mlong-options.c:27:1:[22m [36m[1mnote: [minclude '[1m<stdlib.h>[22m' or provide a declaration of '[1mexit[22m'[K
+   26 | #include "long-options.h"
+  +++ |+[32m#include <stdlib.h>[K[m
+   27 |
+[1mlong-options.c:65:11:[22m [35m[1mwarning: [mincompatible implicit declaration of built-in function '[1mexit[22m'
+[36;92H' [[35m]8;id=11736-2;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wbuiltin-declaration-mismatch\[1m-Wbuiltin-declaration-mismatch[m]8;;\][K
+   65 |[35m[1m[11Cexit[m (0);[K
+      |[35m[1m[11C^~~~[m[K
+[1mlong-options.c:65:11:[22m [36m[1mnote: [minclude '[1m<stdlib.h>[22m' or provide a declaration of '[1mexit[22m'[K
+gcc -DHAVE_CONFIG_H -I. -I. -I..   -g -O2 -c xstrtol.c
+gcc -DHAVE_CONFIG_H -I. -I. -I..   -g -O2 -c xstrtoul.c
+gcc -DHAVE_CONFIG_H -I. -I. -I..   -g -O2 -c error.c
+rm -f libzmodem.a
+ar cru libzmodem.a long-options.o xstrtol.o xstrtoul.o error.o 
+ar: `u' modifier ignored since `D' is the default (see `U')
+ranlib libzmodem.a
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/lib'
+Making all in intl
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/intl'
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  intl-compat.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  bindtextdom.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  dcgettext.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  dgettext.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  gettext.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  finddomain.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  loadmsgcat.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  localealias.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  textdomain.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  l10nflist.c
+gcc -c -DLOCALEDIR=\"/usr/local/share/locale\" -DGNULOCALEDIR=\"/usr/local/share/locale\" -D
+[36;92HDLOCALE_ALIAS_PATH=\"/usr/local/share/locale:.\" -DHAVE_CONFIG_H -I.. -I. -I../intl -I../lib 
+[36;92H  -g -O2  explodename.c
+rm -f libintl.a
+ar cru libintl.a intl-compat.o bindtextdom.o dcgettext.o dgettext.o gettext.o finddomain.o l
+[36;92Hloadmsgcat.o localealias.o textdomain.o l10nflist.o explodename.o
+ar: `u' modifier ignored since `D' is the default (see `U')
+ranlib libintl.a
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/intl'
+Making all in src
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/src'
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c lrz.c
+[1mlrz.c:[22m In function '[1mexec2[22m':[K
+[1mlrz.c:2322:9:[22m [35m[1mwarning: [mmissing sentinel in function call [[35m]8;id=11736-3;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat=\[1m-Wformat=[m]8;;\][K
+ 2322 |[35m[1m[9Cexecl[m("/bin/sh", "sh", "-c", s);[K
+      |[35m[1m[9C^~~~~[m[K
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c timing.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c zperr.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c zreadline.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c crctab.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c rbsb.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c zm.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c protname.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c tcp.c
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c lsyslog.c
+[1mlsyslog.c:[22m In function '[1mlsyslog[22m':[K
+[1mlsyslog.c:67:25:[22m [35m[1mwarning: [mimplicit declaration of function '[1msprintf[22m' [[35m]8;id=11736-4;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wimplicit-function-declaration\[1m-Wimplicit-function-de[m]8;;\
+[35m]8;id=11736-4;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wimplicit-function-declaration\[1m[36;92Heclaration[m]8;;\][K
+   67 |[35m[1m[25Csprintf[m(uid_string,"#%lu",(unsigned long) uid);[K
+      |[35m[1m[25C^~~~~~~[m[K
+[1mlsyslog.c:26:1:[22m [36m[1mnote: [minclude '[1m<stdio.h>[22m' or provide a declaration of '[1msprintf[22m'[K
+   25 | #include <stdlib.h>
+  +++ |+[32m#include <stdio.h>[K[m
+   26 | #include <string.h>
+[1mlsyslog.c:67:25:[22m [35m[1mwarning: [mincompatible implicit declaration of built-in function '[1msprintf[22m' [35m]8;id=11736-5;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wbuiltin-declaration-mismatch\[1m-[m]8;;\
+[35m]8;id=11736-5;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wbuiltin-declaration-mismatch\[1m[36;92H-Wbuiltin-declaration-mismatch[m]8;;\][K
+   67 |[35m[1m[25Csprintf[m(uid_string,"#%lu",(unsigned long) uid);[K
+      |[35m[1m[25C^~~~~~~[m[K
+[1mlsyslog.c:67:25:[22m [36m[1mnote: [minclude '[1m<stdio.h>[22m' or provide a declaration of '[1msprintf[22m'[K
+[1mlsyslog.c:72:5:[22m [35m[1mwarning: [mimplicit declaration of function '[1mvasprintf[22m'; did you mean '[1mvstring[22m
+[1m[36;92Hgf[22m'? [[35m]8;id=11736-6;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wimplicit-function-declaration\[1m-Wimplicit-function-declaration[m]8;;\][K
+   72 |     [35m[1mvasprintf[m(&s,format, ap);[K
+      |     [35m[1m^~~~~~~~~[m[K
+      |     [32mvstringf[K[m
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c canit.c
+gcc -g -O2  -o lrz  lrz.o timing.o zperr.o zreadline.o crctab.o rbsb.o zm.o protname.o tcp.o
+[36;92Ho lsyslog.o canit.o ../lib/libzmodem.a ../intl/libintl.a
+gcc -DNFGVMIN -DHAVE_CONFIG_H -DLOCALEDIR=\"/usr/local/share/locale\" -I.. -I. -I../src -I..
+[36;92H./intl -I../lib  -g -O2 -c lsz.c
+[1mlsz.c:[22m In function '[1mwctxpn[22m':[K
+[1mlsz.c:1239:35:[22m [35m[1mwarning: [mformat '[1m%lo[22m' expects argument of type '[1mlong unsigned int[22m', but argum
+[36;92Hment 4 has type '[1mtime_t[22m' {aka '[1mlong long int[22m'} [[35m]8;id=11736-7;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat=\[1m-Wformat=[m]8;;\][K
+ 1239 |                 sprintf(p, "%lu [35m[1m%lo[m %o 0 %d %ld", (long) f.st_size, f.st_mtime,     [37;1H
+      |[35m[1m[33C~~^[m[K
+      |[35m[1m[35C|[m[K
+      |[35m[1m[35Clong unsigned int[m[K
+      |[33X[32m[33C%llo[K[m
+gcc -g -O2  -o lsz  lsz.o timing.o zperr.o zreadline.o crctab.o rbsb.o zm.o protname.o tcp.o
+[36;92Ho lsyslog.o canit.o ../lib/libzmodem.a ../intl/libintl.a
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/src'
+Making all in po
+Making all in man
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/man'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/man'
+Making all in testsuite
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/testsuite'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/testsuite'
+make[1]: Leaving directory '/tmp/lrzsz-0.12.20'
+flexedge:/tmp/lrzsz-0.12.20# make install
+Making install in lib
+Making install in intl
+make[1]: Entering directory '/tmp/lrzsz-0.12.20/intl'
+if test "lrzsz" = "gettext" \
+   && test 'intl-compat.o' = 'intl-compat.o'; then \
+  if test -r ./mkinstalldirs; then \
+    ./mkinstalldirs /usr/local/lib /usr/local/include; \
+  else \
+    ../mkinstalldirs /usr/local/lib /usr/local/include; \
+  fi; \
+  /usr/bin/install -c -m 644 intlh.inst /usr/local/include/libintl.h; \
+  /usr/bin/install -c -m 644 libintl.a /usr/local/lib/libintl.a; \
+else \
+  : ; \
+fi
+if test "lrzsz" = "gettext"; then \
+  if test -r ./mkinstalldirs; then \
+    ./mkinstalldirs /usr/local/share/gettext/intl; \
+  else \
+    ../mkinstalldirs /usr/local/share/gettext/intl; \
+  fi; \
+  /usr/bin/install -c -m 644 VERSION /usr/local/share/gettext/intl/VERSION; \
+  dists="ChangeLog Makefile.in linux-msg.sed po2tbl.sed.in xopen-msg.sed gettext.h gettextP.
+[36;92H.h hash-string.h libgettext.h loadinfo.h bindtextdom.c dcgettext.c dgettext.c gettext.c findd
+[36;92Hdomain.c loadmsgcat.c localealias.c textdomain.c l10nflist.c explodename.c intl-compat.c cat-
+[36;92H-compat.c"; \
+  for file in $dists; do \
+    /usr/bin/install -c -m 644 ./$file /usr/local/share/gettext/intl/$file; \
+  done; \
+else \
+  : ; \
+fi
+make[1]: Leaving directory '/tmp/lrzsz-0.12.20/intl'
+Making install in src
+make[1]: Entering directory '/tmp/lrzsz-0.12.20/src'
+/bin/sh ../mkinstalldirs /usr/local/bin
+  /usr/bin/install -c lrz /usr/local/bin/lrz
+  /usr/bin/install -c lsz /usr/local/bin/lsz
+rm -f //usr/local/bin/`echo lsb | sed -e 's,x,x,'`
+ln //usr/local/bin/`echo lsz |sed -e 's,x,x,'` \
+        //usr/local/bin/`echo lsb |sed -e 's,x,x,'`
+rm -f /usr/local/bin/`echo lsx | sed -e 's,x,x,'`
+ln //usr/local/bin/`echo lsz |sed -e 's,x,x,'` \
+        //usr/local/bin/`echo lsx |sed -e 's,x,x,'`
+rm -f /usr/local/bin/`echo lrb | sed -e 's,x,x,'`
+ln //usr/local/bin/`echo lrz |sed -e 's,x,x,'` \
+        //usr/local/bin/`echo lrb |sed -e 's,x,x,'`
+rm -f /usr/local/bin/`echo lrx | sed -e 's,x,x,'`
+ln //usr/local/bin/`echo lrz |sed -e 's,x,x,'` \
+        //usr/local/bin/`echo lrx |sed -e 's,x,x,'`
+make[1]: Leaving directory '/tmp/lrzsz-0.12.20/src'
+Making install in po
+make[1]: Entering directory '/tmp/lrzsz-0.12.20/po'
+if test -r .././mkinstalldirs; then \
+  .././mkinstalldirs /usr/local/share; \
+else \
+  ../mkinstalldirs /usr/local/share; \
+fi
+mkdir /usr/local/share/locale
+mkdir /usr/local/share/locale/de
+mkdir /usr/local/share/locale/de/LC_MESSAGES
+installing de.gmo as /usr/local/share/locale/de/LC_MESSAGES/lrzsz.mo
+if test "lrzsz" = "gettext"; then \
+  if test -r .././mkinstalldirs; then \
+    .././mkinstalldirs /usr/local/share/gettext/po; \
+  else \
+    ../mkinstalldirs /usr/local/share/gettext/po; \
+  fi; \
+  /usr/bin/install -c -m 644 ./Makefile.in.in \
+                  /usr/local/share/gettext/po/Makefile.in.in; \
+else \
+  : ; \
+fi
+make[1]: Leaving directory '/tmp/lrzsz-0.12.20/po'
+Making install in man
+make[1]: Entering directory '/tmp/lrzsz-0.12.20/man'
+make install-man1
+make[2]: Entering directory '/tmp/lrzsz-0.12.20/man'
+/bin/sh ../mkinstalldirs /usr/local/man/man1
+mkdir /usr/local/man
+mkdir /usr/local/man/man1
+ /usr/bin/install -c -m 644 ./lrz.1 /usr/local/man/man1/lrz.1
+ /usr/bin/install -c -m 644 ./lsz.1 /usr/local/man/man1/lsz.1
+make[2]: Leaving directory '/tmp/lrzsz-0.12.20/man'
+make[1]: Leaving directory '/tmp/lrzsz-0.12.20/man'
+Making install in testsuite
+flexedge:/tmp/lrzsz-0.12.20# ln -s /usr/local/bin/lrz /usr/local/bin/rz
+flexedge:/tmp/lrzsz-0.12.20# ln -s /usr/local/bin/lsz /usr/local/bin/sz
+flexedge:/tmp/lrzsz-0.12.20#[1Csz [K[K[Kcd /tflexedge:/tmp/lrzsz-0.12.20# cd /tmp/[K
+flexedge:/tmp#[1Cll
+total 280
+-rw-r--r--    1 root     root            31 Aug 28 14:14 5ACF2DF051BDA278
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mcore[m[K
+drwxr-xr-x   15 root     root           300 Aug 28 14:15 [34m[1mcrimson[m[K
+drwxr-xr-x    2 root     root            80 Aug 28 14:14 [34m[1minfo[m[K
+drwxrwxrwx    9 406      disk          1060 Sep  4 18:45 [34m[1mlrzsz-0.12.20[m[K
+-rw-r--r--    1 root     root        280938 Dec 30  1998 lrzsz-0.12.20.tar.gz
+drwxr-xr-x    2 root     root            80 Aug 28 14:15 [34m[1msleds[m[K
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mtalk2m[m[K
+flexedge:/tmp#[1Csz lrs[K[K[Klrzsz-0flexedge:/tmp# sz lrzsz-0.12.20[K.tflexedge:/tmp# sz lrzsz-0.12.20.tar.gz[K[1C
+rz[?25l�*B00000000000000[37;2H[?25hflexedge:/tmp# ^C
+
+flexedge:/tmp#[1Crz
+[?25l�z waiting to receive.**B0100000023be50[37;2H[?25hflexedge:/tmp# ^C
+
+flexedge:/tmp#[1Cll
+total 280
+-rw-r--r--    1 root     root            31 Aug 28 14:14 5ACF2DF051BDA278
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mcore[m[K
+drwxr-xr-x   15 root     root           300 Aug 28 14:15 [34m[1mcrimson[m
+drwxr-xr-x    2 root     root            80 Aug 28 14:14 [34m[1minfo[m[K
+drwxrwxrwx    9 406      disk          1060 Sep  4 18:45 [34m[1mlrzsz-0.12.20[m[K
+-rw-r--r--    1 root     root        280938 Dec 30  1998 lrzsz-0.12.20.tar.gz
+drwxr-xr-x    2 root     root            80 Aug 28 14:15 [34m[1msleds[m[K
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mtalk2m[m[K
+flexedge:/tmp#[1Clocate keep_alive.py
+-ash: locate: not found
+flexedge:/tmp#[1Cfind keep_alive.py
+find: keep_alive.py: No such file or directory
+flexedge:/tmp#[1Crz[?25l
+�z waiting to receive.**B0100000023be50[37;2H[?25hflexedge:/tmp# 
+flexedge:/tmp#[1Cll
+total 280
+-rw-r--r--    1 root     root            31 Aug 28 14:14 5ACF2DF051BDA278
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mcore[m
+drwxr-xr-x   15 root     root           300 Aug 28 14:15 [34m[1mcrimson[m
+drwxr-xr-x    2 root     root            80 Aug 28 14:14 [34m[1minfo[m[K
+drwxrwxrwx    9 406      disk          1060 Sep  4 18:45 [34m[1mlrzsz-0.12.20[m[K
+-rw-r--r--    1 root     root        280938 Dec 30  1998 lrzsz-0.12.20.tar.gz
+drwxr-xr-x    2 root     root            80 Aug 28 14:15 [34m[1msleds[m[K
+drwxr-xr-x    2 root     root            40 Aug 28 14:14 [34m[1mtalk2m[m[K
+flexedge:/tmp#[1C
